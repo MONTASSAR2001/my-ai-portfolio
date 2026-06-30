@@ -1,237 +1,269 @@
 "use client"
 
-import Image from "next/image"
+import { useRef } from "react"
+import { motion, useScroll, useTransform } from "framer-motion"
+import { ArrowRight, ChevronDown } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ExpItem { title: string; company: string; duration?: string; description?: string }
 interface PortfolioRow {
-  slug: string; summary?: string; skills?: string[]
-  experience?: ExpItem[]; profile_image?: string | null
+  slug: string; name?: string; role?: string; email?: string
+  summary?: string; skills?: string[]; experience?: ExpItem[]
+  profile_image?: string | null
 }
 
-// ─── Injected CSS (v0 globals: animate-marquee, animate-pulse-dot) ─────────────
+// ─── CSS ──────────────────────────────────────────────────────────────────────
 const CINEMATIC_CSS = `
-  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  .animate-marquee { animation: marquee 40s linear infinite; }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
-    50%       { opacity: 0.6; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  .cinematic-root {
+    --background: #030303;
+    --foreground: #f0f0f0;
+    --muted: #888888;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
   }
-  .animate-pulse-dot { animation: pulse-dot 3s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce) { .animate-marquee, .animate-pulse-dot { animation: none; } }
+  .cinematic-root h1, .cinematic-root h2, .cinematic-root h3, .serif {
+    font-family: 'Playfair Display', 'Georgia', serif;
+  }
+  .cinematic-gradient {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+  }
+  
+  .slow-pan {
+    animation: pan-image 40s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pan-image {
+    0% { transform: scale(1.05) translate(0, 0); }
+    100% { transform: scale(1.15) translate(-1%, -2%); }
+  }
 `
 
-// ─── Nav ──────────────────────────────────────────────────────────────────────
-function Nav({ slug, isPreview }: { slug: string, isPreview?: boolean }) {
-  const initials = slug.split("-").map(w => w[0]?.toUpperCase() ?? "").join("—").slice(0, 3)
+// ─── Animation Variants ───────────────────────────────────────────────────────
+const fadeUp = {
+  hidden: { opacity: 0, y: 50 },
+  show: { opacity: 1, y: 0, transition: { duration: 1.5, ease: [0.16, 1, 0.3, 1] } }
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.4, delayChildren: 0.2 } }
+}
+
+// ─── Components ───────────────────────────────────────────────────────────────
+function CinematicNav({ name, isPreview }: { name: string; isPreview?: boolean }) {
   return (
-    <header className={`${isPreview ? "absolute" : "fixed"} inset-x-0 top-0 z-50`}>
-      <nav className="mx-auto mt-4 flex max-w-7xl items-center justify-between rounded-full border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-xl md:mx-6 lg:mx-auto">
-        <a href="#" className="font-mono text-sm font-semibold tracking-widest text-white">
-          {initials}
-        </a>
-        <div className="hidden items-center gap-8 sm:flex">
-          {[["Work", "#work"], ["Skills", "#skills"], ["Contact", "#contact"]].map(([label, href]) => (
-            <a key={href} href={href} className="text-sm text-white/60 transition-colors hover:text-white">
-              {label}
-            </a>
-          ))}
-        </div>
-        <a href="#contact" className="rounded-full bg-white/10 px-4 py-1.5 text-sm text-white transition-colors hover:bg-white/20">
-          Resume
-        </a>
-      </nav>
-    </header>
+    <motion.nav 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 2, delay: 0.5 }}
+      className={`z-50 ${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 flex items-center justify-between px-8 py-8 mix-blend-difference pointer-events-none`}
+    >
+      <span className="text-sm font-bold tracking-[0.3em] uppercase pointer-events-auto">{name}</span>
+      <a href="#contact" className="text-xs tracking-[0.2em] uppercase border-b border-white/30 pb-1 hover:border-white transition-colors duration-500 pointer-events-auto">
+        Contact
+      </a>
+    </motion.nav>
   )
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-function Hero({ p }: { p: PortfolioRow }) {
-  const parts = p.slug.split("-")
-  const firstName = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : "Kael"
-  const lastName  = parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Voss"
+function HeroSection({ p }: { p: PortfolioRow }) {
+  const { scrollY } = useScroll();
+  const yBg = useTransform(scrollY, [0, 1000], [0, 250]);
+  const opacityText = useTransform(scrollY, [0, 500], [1, 0]);
+  const scaleText = useTransform(scrollY, [0, 500], [1, 0.95]);
+
+  const name = p.name || p.slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
 
   return (
-    <section className="relative flex min-h-screen items-center overflow-hidden px-6 pt-24 md:px-12 lg:px-20">
-      {/* Ambient grid / vignette */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ backgroundImage: "radial-gradient(circle at 50% 50%, rgba(67,56,202,0.08), transparent 60%)" }}
-      />
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
-        {/* Left: typography */}
-        <div className="order-2 lg:order-1">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-xl">
-            <span className="animate-pulse-dot size-2 rounded-full bg-emerald-400" />
-            <span className="font-mono text-xs tracking-widest text-white/60">AVAILABLE FOR {new Date().getFullYear()}</span>
+    <section className="relative h-[100vh] flex items-center justify-center overflow-hidden bg-black">
+      <motion.div style={{ y: yBg }} className="absolute inset-0 z-0">
+        {p.profile_image ? (
+          <div className="relative w-full h-full">
+            {/* Dramatic vignettes */}
+            <div className="absolute inset-0 bg-black/50 z-10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-[#030303]/50 z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#030303] via-transparent to-[#030303]/50 z-10" />
+            
+            <img src={p.profile_image} alt={name} className="w-full h-full object-cover slow-pan opacity-60" />
           </div>
-          <h1 className="text-balance text-6xl font-bold leading-[0.92] tracking-tight text-white sm:text-7xl lg:text-8xl">
-            {firstName}
-            <br />
-            <span className="bg-gradient-to-r from-indigo-300 via-white to-emerald-300 bg-clip-text text-transparent">
-              {lastName}
-            </span>
-          </h1>
-          <p className="mt-8 max-w-md text-pretty text-lg leading-relaxed text-white/50">
-            {p.summary || "Engineer architecting ambitious systems at the edge of research and product."}
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a href="#work" className="rounded-full bg-white px-7 py-3 text-sm font-medium text-[#05050A] transition-transform hover:scale-[1.03]">
-              View Work
-            </a>
-            <a href="#contact" className="rounded-full border border-white/15 bg-white/5 px-7 py-3 text-sm font-medium text-white/80 backdrop-blur-xl transition-colors hover:bg-white/10">
-              Get in touch
-            </a>
-          </div>
-        </div>
+        ) : (
+          <div className="w-full h-full cinematic-gradient opacity-40" />
+        )}
+      </motion.div>
+      
+      <motion.div 
+        style={{ opacity: opacityText, scale: scaleText }}
+        className="z-10 text-center px-4 max-w-5xl"
+      >
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, delay: 0.8 }}
+          className="text-white/50 uppercase tracking-[0.4em] text-xs md:text-sm mb-6 md:mb-10"
+        >
+          {p.role || "Creative Portfolio"}
+        </motion.p>
+        <motion.h1 
+          initial={{ opacity: 0, filter: "blur(12px)", scale: 0.95 }}
+          animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+          transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
+          className="text-5xl md:text-8xl lg:text-9xl font-semibold tracking-tighter mb-8 text-white/90"
+        >
+          {name}
+        </motion.h1>
+      </motion.div>
 
-        {/* Right: avatar with aura */}
-        <div className="relative order-1 flex items-center justify-center lg:order-2">
-          {/* Massive blurred radial aura */}
-          <div
-            aria-hidden="true"
-            className="absolute aspect-square w-[120%] max-w-[640px] rounded-full opacity-70 blur-[120px]"
-            style={{ background: "radial-gradient(circle at 35% 35%, #4338ca 0%, transparent 55%), radial-gradient(circle at 70% 70%, #10b981 0%, transparent 55%)" }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute aspect-square w-[80%] max-w-[440px] rounded-full opacity-60 blur-[80px]"
-            style={{ background: "radial-gradient(circle, rgba(99,102,241,0.5) 0%, transparent 70%)" }}
-          />
-          <div className="relative aspect-square w-64 overflow-hidden rounded-full border border-white/10 shadow-2xl sm:w-80 lg:w-96">
-            {p.profile_image ? (
-              <Image src={p.profile_image} alt={`Portrait of ${firstName} ${lastName}`} fill priority sizes="(max-width:1024px) 320px, 384px" className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-white/5 text-8xl font-black text-white/10">
-                {firstName.charAt(0)}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-[0.3em] text-white/30">
-        SCROLL TO EXPLORE
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        transition={{ duration: 2, delay: 3 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-white/40"
+      >
+        <span className="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
+        <ChevronDown className="w-4 h-4 animate-bounce" />
+      </motion.div>
     </section>
   )
 }
 
-// ─── Skills Marquee ───────────────────────────────────────────────────────────
-function SkillsMarquee({ skills }: { skills?: string[] }) {
-  const items = skills?.length ? skills : ["TypeScript", "React", "Next.js", "Node.js", "GraphQL", "PostgreSQL", "Docker", "Kubernetes", "Python", "Rust"]
-
-  function Pill({ label }: { label: string }) {
-    return (
-      <li className="group relative flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 backdrop-blur-xl transition-colors hover:border-emerald-400/40">
-        <span aria-hidden="true" className="size-1.5 rounded-full bg-gradient-to-r from-indigo-400 to-emerald-400 shadow-[0_0_8px_2px_rgba(16,185,129,0.5)]" />
-        <span className="whitespace-nowrap text-sm font-medium text-white/80">{label}</span>
-      </li>
-    )
-  }
-
+function SummarySection({ summary }: { summary?: string }) {
   return (
-    <section id="skills" className="relative py-24" aria-label="Skills">
-      <div className="mx-auto mb-12 max-w-7xl px-6 md:px-12 lg:px-20">
-        <p className="font-mono text-xs tracking-[0.3em] text-emerald-400/80">/ CAPABILITIES</p>
-      </div>
-      <div className="relative flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-        <ul className="animate-marquee flex shrink-0 gap-4 pr-4">
-          {items.map(s => <Pill key={s} label={s} />)}
-        </ul>
-        <ul className="animate-marquee flex shrink-0 gap-4 pr-4" aria-hidden="true">
-          {items.map(s => <Pill key={`dup-${s}`} label={s} />)}
-        </ul>
-      </div>
+    <section className="py-40 px-6 md:px-16 max-w-5xl mx-auto flex items-center justify-center min-h-[60vh]">
+      <motion.div 
+        initial="hidden" 
+        whileInView="show" 
+        viewport={{ once: true, margin: "-100px" }}
+        variants={fadeUp}
+      >
+        <h2 className="serif text-3xl md:text-5xl leading-relaxed md:leading-snug text-center text-white/80 font-light">
+          "{summary || "A passionate creative pushing the boundaries of art and technology to deliver unforgettable digital experiences."}"
+        </h2>
+      </motion.div>
     </section>
   )
 }
 
-// ─── Experience Timeline ──────────────────────────────────────────────────────
-function ExperienceTimeline({ experience }: { experience?: ExpItem[] }) {
-  const entries = experience?.length ? experience.map(e => ({
-    year: e.duration?.split(/[–—-]/)[0]?.trim() ?? "—",
-    role: e.title,
-    company: e.company,
-    detail: e.description ?? "",
-  })) : [
-    { year: "2024", role: "Principal Engineer", company: "Helix Labs", detail: "Leading autonomous systems deployed at planetary scale." },
-    { year: "2022", role: "Senior Engineer", company: "Nebula AI", detail: "Designed low-latency inference infrastructure serving 4B+ daily requests." },
+function ExperienceSection({ experience }: { experience?: ExpItem[] }) {
+  const items = experience?.length ? experience : [
+    { title: "Art Director", company: "Studio X", duration: "2021 — Present", description: "Leading creative vision for global brands, crafting narratives that resonate on a deeply emotional level." },
+    { title: "Senior Designer", company: "Agency Y", duration: "2018 — 2021", description: "Crafted award-winning digital campaigns that merged striking visuals with seamless interactivity." }
   ]
 
   return (
-    <section id="work" className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 lg:px-20" aria-label="Experience">
-      <p className="mb-4 font-mono text-xs tracking-[0.3em] text-emerald-400/80">/ TRAJECTORY</p>
-      <h2 className="mb-16 text-balance text-4xl font-bold tracking-tight text-white sm:text-5xl">Experience</h2>
-      <ol className="relative ml-2">
-        {/* vertical line */}
-        <div aria-hidden="true" className="absolute left-0 top-2 h-full w-px bg-gradient-to-b from-indigo-500/40 via-white/10 to-transparent" />
-        {entries.map((item, i) => (
-          <li key={i} className="relative grid grid-cols-1 gap-2 pb-14 pl-8 sm:grid-cols-[120px_1fr] sm:gap-8">
-            {/* glowing dot */}
-            <span aria-hidden="true" className="animate-pulse-dot absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(16,185,129,0.6)]" />
-            <span className="font-mono text-sm text-white/40">{item.year}</span>
-            <div>
-              <h3 className="text-xl font-medium text-white">
-                {item.role}{" "}
-                <span className="text-white/40">— {item.company}</span>
-              </h3>
-              {item.detail && <p className="mt-2 max-w-xl text-pretty leading-relaxed text-white/50">{item.detail}</p>}
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
-// ─── Contact ──────────────────────────────────────────────────────────────────
-function Contact({ p }: { p: PortfolioRow }) {
-  const parts = p.slug.split("-")
-  const firstName = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : "Kael"
-  const lastName  = parts.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Voss"
-  const fullName  = `${firstName} ${lastName}`
-
-  return (
-    <section id="contact" className="relative mx-auto max-w-7xl px-6 py-32 text-center md:px-12 lg:px-20">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 aspect-square w-[60%] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-[140px]"
-        style={{ background: "radial-gradient(circle, #4338ca 0%, transparent 55%), radial-gradient(circle at 70% 60%, #10b981 0%, transparent 55%)" }}
-      />
-      <p className="mb-4 font-mono text-xs tracking-[0.3em] text-emerald-400/80">/ LET&apos;S BUILD</p>
-      <h2 className="mx-auto max-w-3xl text-balance text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
-        Building the future, one commit at a time.
-      </h2>
-      <a
-        href={`mailto:hello@${p.slug}.dev`}
-        className="mt-12 inline-block rounded-full bg-white px-8 py-4 text-sm font-medium text-[#05050A] transition-transform hover:scale-[1.03]"
+    <section className="py-40 px-6 md:px-16 max-w-6xl mx-auto border-t border-white/5 relative">
+      <motion.div 
+        initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} 
+        className="mb-32 text-center"
       >
-        hello@{p.slug}.dev
-      </a>
-      <footer className="mt-28 border-t border-white/10 pt-8 font-mono text-xs tracking-widest text-white/30">
-        © {new Date().getFullYear()} {fullName.toUpperCase()} — DESIGNED IN THE DARK
-      </footer>
+        <h2 className="text-5xl md:text-7xl font-semibold tracking-tight text-white/90">Selected Works</h2>
+        <p className="mt-6 text-white/40 tracking-[0.3em] uppercase text-xs">Experience & History</p>
+      </motion.div>
+
+      <motion.div 
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-100px" }}
+        className="space-y-32"
+      >
+        {items.map((exp, i) => (
+          <motion.div key={i} variants={fadeUp} className="group flex flex-col md:flex-row gap-8 md:gap-16 items-start">
+            <div className="md:w-1/3 shrink-0">
+              <p className="text-xl md:text-2xl text-white/30 mb-3 serif italic tracking-wide">{exp.duration}</p>
+              <h3 className="text-3xl md:text-4xl font-semibold text-white/70 group-hover:text-white transition-colors duration-1000">{exp.company}</h3>
+            </div>
+            <div className="md:w-2/3">
+              <h4 className="text-2xl md:text-3xl mb-6 font-light text-white/80">{exp.title}</h4>
+              {exp.description && (
+                <p className="text-lg text-white/40 leading-relaxed max-w-2xl">{exp.description}</p>
+              )}
+              <div className="mt-12 overflow-hidden opacity-30 group-hover:opacity-100 transition-opacity duration-1000">
+                <div className="w-0 h-px bg-white group-hover:w-full transition-all duration-[1.5s] ease-out" />
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
     </section>
   )
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-export default function CinematicTemplateClient({ p, isPreview }: { p: PortfolioRow, isPreview?: boolean }) {
+function SkillsSection({ skills }: { skills?: string[] }) {
+  const items = skills?.length ? skills : ["Direction", "Cinematography", "UI/UX", "Motion Graphics", "3D Rendering", "Visual Effects"]
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#05050A] text-white">
+    <section className="py-40 px-6 md:px-16 bg-[#080808]">
+      <div className="max-w-6xl mx-auto">
+        <motion.h2 
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+          className="text-3xl md:text-5xl font-semibold text-center mb-24 text-white/80"
+        >
+          Expertise
+        </motion.h2>
+        <motion.div 
+          variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }}
+          className="flex flex-wrap justify-center gap-x-16 gap-y-12"
+        >
+          {items.map((skill, i) => (
+            <motion.div key={i} variants={fadeUp} className="overflow-hidden">
+              <motion.span 
+                whileHover={{ scale: 1.05, color: "#fff" }}
+                className="block text-2xl md:text-4xl font-light text-white/30 cursor-default transition-colors duration-700 serif italic"
+              >
+                {skill}
+              </motion.span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+function ContactSection({ p }: { p: PortfolioRow }) {
+  const email = p.email || `hello@${p.slug}.dev`
+  const name = p.name || p.slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+  
+  return (
+    <section id="contact" className="py-40 px-6 md:px-16 max-w-5xl mx-auto text-center flex flex-col items-center justify-center min-h-[70vh]">
+      <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+        <h2 className="text-5xl md:text-8xl font-semibold tracking-tighter mb-10 text-white/90">Get in Touch</h2>
+        <p className="text-lg text-white/40 mb-20 max-w-2xl mx-auto leading-relaxed">
+          Available for freelance opportunities and select collaborations. Let's create something extraordinary together.
+        </p>
+        <motion.a 
+          whileHover={{ scale: 1.05, color: "#fff", borderColor: "#fff" }}
+          whileTap={{ scale: 0.95 }}
+          href={`mailto:${email}`}
+          className="inline-flex items-center gap-6 text-2xl md:text-4xl serif italic border-b border-white/20 pb-4 text-white/70 transition-all duration-700"
+        >
+          {email} <ArrowRight className="w-6 h-6 md:w-8 md:h-8 opacity-50" />
+        </motion.a>
+      </motion.div>
+      
+      <motion.footer 
+        initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 1, duration: 2 }} viewport={{ once: true }}
+        className="mt-40 text-[10px] text-white/20 uppercase tracking-[0.3em]"
+      >
+        © {new Date().getFullYear()} {name}. All rights reserved.
+      </motion.footer>
+    </section>
+  )
+}
+
+export default function CinematicTemplateClient({ p, isPreview }: { p: PortfolioRow; isPreview?: boolean }) {
+  return (
+    <div className="cinematic-root selection:bg-white/20 selection:text-white">
       <style>{CINEMATIC_CSS}</style>
-      {/* global ambient glow top */}
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none ${isPreview ? "absolute" : "fixed"} inset-x-0 top-0 -z-10 h-[60vh] opacity-50`}
-        style={{ background: "radial-gradient(60% 60% at 70% 0%, rgba(67,56,202,0.18), transparent 70%)" }}
-      />
-      <Nav slug={p.slug} isPreview={isPreview} />
-      <Hero p={p} />
-      <SkillsMarquee skills={p.skills} />
-      <ExperienceTimeline experience={p.experience} />
-      <Contact p={p} />
-    </main>
+      <CinematicNav name={p.name || p.slug.split("-")[0]} isPreview={isPreview} />
+      <main>
+        <HeroSection p={p} />
+        <SummarySection summary={p.summary} />
+        <ExperienceSection experience={p.experience} />
+        <SkillsSection skills={p.skills} />
+        <ContactSection p={p} />
+      </main>
+    </div>
   )
 }

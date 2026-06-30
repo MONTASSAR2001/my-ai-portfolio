@@ -1,5 +1,10 @@
 "use client"
 
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Terminal as TerminalIcon, GitBranch, FolderGit2 } from "lucide-react"
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 interface ExpItem { title: string; company: string; duration?: string; description?: string }
 interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
@@ -7,158 +12,293 @@ interface PortfolioRow {
   profile_image?: string | null
 }
 
-const ELEGANT_CSS = `
+// ─── CSS ──────────────────────────────────────────────────────────────────────
+const TERMINAL_CSS = `
   .elegant-root {
-    font-family: 'Inter', 'Courier New', monospace;
-    background: #0f0f0f;
-    color: #ffffff;
-    --accent: #00ff88;
-    --accent-dim: rgba(0,255,136,0.1);
-    --card-bg: #1a1a1a;
-    --border: #2a2a2a;
-    --muted: #a0a0a0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    background-color: #050505;
+    color: #a3a3a3;
+    min-height: 100vh;
   }
-  .elegant-root .tech-card {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
+  .matrix-bg {
+    background-image: 
+      linear-gradient(rgba(74, 222, 128, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74, 222, 128, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .term-green {
+    color: #4ade80;
+  }
+  .term-window {
+    background-color: #0a0a0a;
+    border: 1px solid #1f1f1f;
     border-radius: 8px;
-    padding: 1.5rem;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
   }
-  .elegant-root .tech-card:hover {
-    border-color: rgba(0,255,136,0.4);
-    box-shadow: 0 0 15px rgba(0,255,136,0.1);
+  .cursor-blink {
+    animation: blink 1s step-end infinite;
   }
-  .elegant-root .accent { color: #00ff88; }
-  @keyframes bounce-arrow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
-  .elegant-bounce { animation: bounce-arrow 1.5s ease-in-out infinite; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
 `
 
-function ElegantHeader({ p }: { p: PortfolioRow }) {
-  const name = p.name || p.slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-  const firstName = name.split(" ")[0] || "Dev"
-  const lastName = name.split(" ").slice(1).join(" ") || ""
+// ─── Animation Components ────────────────────────────────────────────────────
+function TerminalTypewriter({ text, prompt = ">", delay = 0 }: { text: string; prompt?: string; delay?: number }) {
+  const characters = Array.from(text);
   return (
-    <header style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 1rem", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "linear-gradient(0deg,transparent 24%,rgba(0,255,136,.05) 25%,rgba(0,255,136,.05) 26%,transparent 27%,transparent 74%,rgba(0,255,136,.05) 75%,rgba(0,255,136,.05) 76%,transparent 77%,transparent),linear-gradient(90deg,transparent 24%,rgba(0,255,136,.05) 25%,rgba(0,255,136,.05) 26%,transparent 27%,transparent 74%,rgba(0,255,136,.05) 75%,rgba(0,255,136,.05) 76%,transparent 77%,transparent)", backgroundSize: "50px 50px" }} />
-      <div style={{ position: "relative", zIndex: 10, textAlign: "center", maxWidth: 768 }}>
-        <div style={{ display: "inline-block", marginBottom: 24 }}>
-          <div style={{ padding: "0.5rem 1rem", border: "1px solid rgba(0,255,136,0.4)", borderRadius: 9999, color: "#00ff88", fontSize: "0.875rem", fontFamily: "monospace" }}>
-            &lt; Developer Portfolio /&gt;
-          </div>
+    <div className="inline-block break-words">
+      {prompt && <span className="term-green mr-3 select-none">{prompt}</span>}
+      <motion.span
+        variants={{
+          hidden: { opacity: 1 },
+          show: { opacity: 1, transition: { staggerChildren: 0.03, delayChildren: delay } }
+        }}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-50px" }}
+      >
+        {characters.map((char, i) => (
+          <motion.span
+            key={i}
+            variants={{
+              hidden: { opacity: 0, display: "none" },
+              show: { opacity: 1, display: "inline" }
+            }}
+          >
+            {char}
+          </motion.span>
+        ))}
+      </motion.span>
+      <span className="cursor-blink term-green ml-1 select-none">_</span>
+    </div>
+  )
+}
+
+function TermHoverPopup({ children, popupText }: { children: React.ReactNode; popupText: string }) {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <div 
+      className="relative inline-block cursor-crosshair w-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 z-50 pointer-events-none"
+          >
+            <div className="term-window p-3 text-xs bg-[#050505]">
+              <div className="flex gap-1.5 mb-3 border-b border-gray-800 pb-2">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+              </div>
+              <p className="term-green font-bold mb-1">$ cat details.txt</p>
+              <p className="text-gray-400">{popupText}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Content Sections ───────────────────────────────────────────────────────
+function TopBar({ name, isPreview }: { name: string; isPreview?: boolean }) {
+  return (
+    <header className={`term-window ${isPreview ? 'absolute' : 'fixed'} top-4 left-4 right-4 z-50 flex items-center justify-between px-4 py-3 bg-[#0a0a0a]/90 backdrop-blur`}>
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1.5 mr-4">
+          <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
+          <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
         </div>
-        <h1 style={{ fontSize: "clamp(3rem,8vw,5rem)", fontWeight: 700, lineHeight: 1.1, marginBottom: 24 }}>
-          {firstName}{" "}<span className="accent">{lastName}</span>
-        </h1>
-        {p.role && <p style={{ fontSize: "1.1rem", color: "#a0a0a0", marginBottom: 16, fontFamily: "monospace" }}>{p.role}</p>}
-        <p style={{ fontSize: "1.1rem", color: "#a0a0a0", marginBottom: 48, lineHeight: 1.7, maxWidth: 600, margin: "0 auto 48px" }}>
-          {p.summary || "Full-stack engineer crafting elegant solutions at the intersection of technology and design."}
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center" }}>
-          <button style={{ padding: "0.75rem 2rem", background: "#00ff88", color: "#0f0f0f", borderRadius: 8, fontWeight: 700, border: "none", cursor: "pointer", fontSize: "1rem" }}>View My Work</button>
-          <button style={{ padding: "0.75rem 2rem", border: "1px solid rgba(0,255,136,0.4)", color: "#00ff88", borderRadius: 8, fontWeight: 700, background: "transparent", cursor: "pointer", fontSize: "1rem" }}>Get In Touch</button>
-        </div>
+        <TerminalIcon className="w-4 h-4 text-gray-500" />
+        <span className="text-xs md:text-sm font-bold text-gray-300">bash — {name.toLowerCase().replace(/\s+/g, '_')}@system:~</span>
       </div>
-      <div style={{ position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)" }} className="elegant-bounce">
-        <svg width={24} height={24} fill="none" stroke="rgba(0,255,136,0.5)" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-        </svg>
+      <div className="hidden md:flex gap-6 text-xs font-bold text-gray-500">
+        <a href="#about" className="hover:term-green transition-colors">./about.sh</a>
+        <a href="#skills" className="hover:term-green transition-colors">./skills.sh</a>
+        <a href="#work" className="hover:term-green transition-colors">./work.sh</a>
+        <a href="#contact" className="hover:term-green transition-colors">./contact.sh</a>
       </div>
     </header>
   )
 }
 
-function ElegantTechStack({ skills }: { skills?: string[] }) {
-  const items = skills?.length ? skills : ["TypeScript", "React", "Node.js", "PostgreSQL", "Docker", "AWS", "Next.js", "GraphQL"]
-  return (
-    <section style={{ padding: "6rem 1rem", maxWidth: 1100, margin: "0 auto" }}>
-      <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 48, color: "#fff" }}>Technical Stack</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
-        {items.map((skill, i) => (
-          <div key={i} className="tech-card" style={{ textAlign: "center", cursor: "default" }}>
-            <span style={{ color: "#fff", fontWeight: 500, fontSize: "0.95rem" }}>{skill}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 48, paddingTop: 48, borderTop: "1px solid #2a2a2a" }}>
-        <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#00ff88", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 24 }}>Core Competencies</h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {["Full-Stack Development", "System Design", "Performance Optimization", "RESTful APIs", "Database Architecture", "CI/CD Pipelines"].map(c => (
-            <span key={c} style={{ padding: "0.5rem 1rem", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 9999, fontSize: "0.875rem", color: "#fff" }}>{c}</span>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function ElegantTimeline({ experience }: { experience?: ExpItem[] }) {
-  const items = experience?.length ? experience : [{ title: "Senior Software Engineer", company: "Tech Corp", duration: "2022–Present", description: "Built scalable distributed systems." }]
-  return (
-    <section style={{ padding: "6rem 1rem", maxWidth: 900, margin: "0 auto" }}>
-      <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 48, color: "#fff" }}>Experience Timeline</h2>
-      <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, width: 2, background: "linear-gradient(to bottom, #00ff88, rgba(0,255,136,0.1))", opacity: 0.3 }} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 48 }}>
-          {items.map((exp, i) => (
-            <div key={i} style={{ position: "relative", paddingLeft: 48 }}>
-              <div style={{ position: "absolute", left: 0, top: 6, width: 12, height: 12, borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 10px rgba(0,255,136,0.6)" }} />
-              <div className="tech-card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#fff" }}>{exp.title}</h3>
-                  {exp.duration && <time style={{ fontSize: "0.875rem", color: "#a0a0a0", fontFamily: "monospace", whiteSpace: "nowrap", marginLeft: 16 }}>{exp.duration}</time>}
-                </div>
-                <p style={{ color: "#00ff88", marginBottom: 8, fontSize: "0.95rem" }}>{exp.company}</p>
-                {exp.description && <p style={{ color: "#a0a0a0", lineHeight: 1.7 }}>{exp.description}</p>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function ElegantFooter({ p }: { p: PortfolioRow }) {
+function TerminalHero({ p }: { p: PortfolioRow }) {
   const name = p.name || p.slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-  const email = p.email || `hello@${p.slug}.dev`
+  const role = p.role || "Software Engineer"
+  
   return (
-    <footer id="contact" style={{ padding: "6rem 1rem", borderTop: "1px solid #2a2a2a" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <h2 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: 48, color: "#fff" }}>Let&apos;s Work Together</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, marginBottom: 64 }}>
-          <div>
-            <p style={{ color: "#a0a0a0", lineHeight: 1.7, marginBottom: 24 }}>I&apos;m always interested in hearing about new projects and opportunities.</p>
-            <div>
-              <p style={{ fontWeight: 600, marginBottom: 8 }}>Get in touch:</p>
-              <a href={`mailto:${email}`} style={{ color: "#00ff88", fontFamily: "monospace", fontSize: "1.1rem", textDecoration: "none" }}>{email}</a>
-            </div>
-          </div>
-          <div className="tech-card">
-            <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#00ff88", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 16 }}>Quick Links</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {["Projects", "Resume", "GitHub", "LinkedIn"].map(link => (
-                <a key={link} href="#" style={{ color: "#a0a0a0", textDecoration: "none", fontSize: "0.875rem" }}>→ {link}</a>
-              ))}
-            </div>
-          </div>
+    <section id="about" className="pt-32 pb-20 px-4 md:px-6 max-w-5xl mx-auto">
+      <div className="term-window p-5 md:p-10 relative">
+        <div className="absolute top-0 left-0 w-full h-8 bg-[#111] border-b border-[#222] rounded-t-lg flex items-center px-4 gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+          <span className="text-[10px] text-gray-500 ml-2 font-bold font-sans tracking-widest">profile.exe</span>
         </div>
-        <div style={{ paddingTop: 48, borderTop: "1px solid #2a2a2a", textAlign: "center", color: "#a0a0a0", fontSize: "0.875rem" }}>
-          © {new Date().getFullYear()} {name}. All rights reserved.
+        
+        <div className="mt-8 space-y-10">
+          <div>
+            <div className="text-lg md:text-2xl font-bold text-white mb-4">
+              <TerminalTypewriter text={`whoami`} prompt="admin@local ~ %" delay={0.2} />
+            </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="pl-4 md:pl-6 border-l-2 border-gray-800 py-2">
+              <p className="text-3xl md:text-5xl font-black mb-3 text-gray-200">{name}</p>
+              <p className="term-green text-xl md:text-2xl font-bold">"{role}"</p>
+            </motion.div>
+          </div>
+
+          <div>
+            <div className="text-lg md:text-2xl font-bold text-white mb-4">
+              <TerminalTypewriter text={`cat summary.txt`} prompt="admin@local ~ %" delay={1.5} />
+            </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }} className="pl-4 md:pl-6 text-gray-400 text-base md:text-lg leading-relaxed max-w-3xl border-l-2 border-gray-800 py-2">
+              {p.summary || "Full-stack developer focused on building scalable, performant, and secure systems."}
+            </motion.div>
+          </div>
         </div>
       </div>
-    </footer>
+    </section>
+  )
+}
+
+function TerminalSkills({ skills }: { skills?: string[] }) {
+  const items = skills?.length ? skills : ["TypeScript", "React", "Node.js", "Python", "Go", "Docker", "Kubernetes", "PostgreSQL", "AWS", "GraphQL"]
+  
+  return (
+    <section id="skills" className="py-20 px-4 md:px-6 max-w-5xl mx-auto">
+      <div className="term-window p-5 md:p-10 relative">
+        <div className="text-lg md:text-2xl font-bold text-white mb-8">
+          <TerminalTypewriter text={`ls -la ./skills/`} prompt="admin@local ~ %" delay={0} />
+        </div>
+        
+        <motion.div 
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }}
+          variants={{ show: { transition: { staggerChildren: 0.05, delayChildren: 1 } } }}
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6 pl-4 md:pl-6 border-l-2 border-gray-800 py-2"
+        >
+          {items.map((skill, i) => {
+            const permissions = "-rw-r--r--"
+            const size = Math.floor(Math.random() * 8000) + 1024
+            return (
+              <motion.div key={i} variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                <TermHoverPopup popupText={`Expertise module loaded: [${skill}]. System nominal and ready for compilation.`}>
+                  <div className="flex flex-col border border-gray-800 p-4 rounded bg-[#080808] hover:border-green-500/40 hover:bg-[#0a0a0a] transition-all">
+                    <div className="text-[10px] text-gray-600 mb-3 flex justify-between font-sans tracking-wider">
+                      <span>{permissions}</span>
+                      <span>{size}B</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <FolderGit2 className="w-4 h-4 term-green" />
+                      <span className="font-bold text-gray-300 text-sm md:text-base">{skill}</span>
+                    </div>
+                  </div>
+                </TermHoverPopup>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+function TerminalExperience({ experience }: { experience?: ExpItem[] }) {
+  const items = experience?.length ? experience : [
+    { title: "Senior Software Engineer", company: "Cyberdyne Systems", duration: "2021 - Present", description: "Developed neural net-based processors. Optimized system architecture." },
+    { title: "Backend Developer", company: "Tyrell Corp", duration: "2018 - 2021", description: "Maintained legacy replicant database and REST APIs." }
+  ]
+  
+  return (
+    <section id="work" className="py-20 px-4 md:px-6 max-w-5xl mx-auto">
+      <div className="term-window p-5 md:p-10 relative">
+        <div className="text-lg md:text-2xl font-bold text-white mb-8">
+          <TerminalTypewriter text={`git log --oneline`} prompt="admin@local ~ %" delay={0} />
+        </div>
+        
+        <motion.div 
+          initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }}
+          variants={{ show: { transition: { staggerChildren: 0.15, delayChildren: 1 } } }}
+          className="space-y-10 mt-8 pl-6 border-l-2 border-gray-800 py-2 relative"
+        >
+          {items.map((exp, i) => {
+            const commitHash = Math.random().toString(16).substr(2, 7)
+            return (
+              <motion.div key={i} variants={{ hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } }} className="relative">
+                <div className="absolute -left-[31px] top-1.5 w-3 h-3 bg-[#0a0a0a] border-2 border-green-500 rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]" />
+                <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                  <span className="text-yellow-500 font-bold text-sm">commit {commitHash}</span>
+                  <span className="text-gray-500 text-xs">({exp.duration})</span>
+                </div>
+                <h3 className="text-white font-bold text-lg md:text-xl mb-2">{exp.title}</h3>
+                <div className="mb-4 text-gray-400 font-bold flex items-center gap-2 text-sm">
+                  <GitBranch className="w-4 h-4 term-green" />
+                  {exp.company}
+                </div>
+                {exp.description && (
+                  <p className="text-gray-500 text-sm leading-relaxed max-w-2xl bg-[#050505] p-5 rounded-md border border-gray-900">
+                    <span className="text-gray-700 select-none">&gt; </span>{exp.description}
+                  </p>
+                )}
+              </motion.div>
+            )
+          })}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+function TerminalContact({ p }: { p: PortfolioRow }) {
+  const email = p.email || `hello@${p.slug}.dev`
+  
+  return (
+    <section id="contact" className="py-20 px-4 md:px-6 max-w-5xl mx-auto mb-20">
+      <div className="term-window p-5 md:p-10 relative">
+        <div className="text-lg md:text-2xl font-bold text-white mb-8">
+          <TerminalTypewriter text={`./ping.sh`} prompt="admin@local ~ %" delay={0} />
+        </div>
+        
+        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 1 }} className="pl-4 md:pl-6 border-l-2 border-gray-800 py-2 space-y-2 font-mono text-xs md:text-sm">
+          <p className="text-gray-500">PING mail-server.local (127.0.0.1): 56 data bytes</p>
+          <p className="text-gray-500">64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.042 ms</p>
+          <p className="text-gray-500">64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.038 ms</p>
+          <p className="text-gray-500 mb-8">--- mail-server.local ping statistics ---</p>
+          
+          <p className="text-white font-bold text-lg md:text-xl mt-8">
+            Connection established. Send packets to:
+          </p>
+          <a href={`mailto:${email}`} className="inline-block mt-4 term-green text-xl md:text-3xl font-black hover:bg-green-500/10 p-2 rounded transition-colors border border-transparent hover:border-green-500/30">
+            {email}
+          </a>
+        </motion.div>
+      </div>
+    </section>
   )
 }
 
 export default function ElegantDeveloperTemplateClient({ p, isPreview }: { p: PortfolioRow; isPreview?: boolean }) {
   return (
-    <div className="elegant-root" style={{ background: "#0f0f0f", color: "#fff", minHeight: "100vh" }}>
-      <style>{ELEGANT_CSS}</style>
-      <ElegantHeader p={p} />
-      <ElegantTechStack skills={p.skills} />
-      <ElegantTimeline experience={p.experience} />
-      <ElegantFooter p={p} />
+    <div className="elegant-root matrix-bg selection:bg-green-500/30 selection:text-green-200">
+      <style>{TERMINAL_CSS}</style>
+      <TopBar name={p.name || p.slug.split("-")[0]} isPreview={isPreview} />
+      <main className="pt-8 relative z-10">
+        <TerminalHero p={p} />
+        <TerminalSkills skills={p.skills} />
+        <TerminalExperience experience={p.experience} />
+        <TerminalContact p={p} />
+      </main>
     </div>
   )
 }
