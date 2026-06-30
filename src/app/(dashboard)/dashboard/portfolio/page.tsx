@@ -3,15 +3,20 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import CinematicTemplateClient from "@/app/p/[slug]/CinematicTemplate.client";
-import FuturisticTemplateClient from "@/app/p/[slug]/FuturisticTemplate.client";
-import PremiumTemplateClient from "@/app/p/[slug]/PremiumTemplate.client";
+import CinematicTemplateClient        from "@/app/p/[slug]/CinematicTemplate.client";
+import FuturisticTemplateClient       from "@/app/p/[slug]/FuturisticTemplate.client";
+import PremiumTemplateClient          from "@/app/p/[slug]/PremiumTemplate.client";
+import ChicTechTemplateClient         from "@/app/p/[slug]/ChicTechTemplate.client";
+import CorporateAITemplateClient      from "@/app/p/[slug]/CorporateAITemplate.client";
+import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTemplate.client";
+import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
+import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface CVData { name: string; role?: string; email?: string; summary: string; skills: string[]; experience: ExpItem[]; }
 type SidebarTab = "content" | "design";
-type TemplateId = "cinematic" | "futuristic" | "premium";
+type TemplateId = "cinematic" | "futuristic" | "premium" | "chic-tech" | "corporate-ai" | "elegant" | "professional" | "robotics";
 interface SiteConfig { templateId: TemplateId; accent: string; profileImage: string; }
 
 const ACCENTS = [
@@ -21,10 +26,15 @@ const ACCENTS = [
   { id: "white", hex: "#f8fafc" }, { id: "slate", hex: "#64748b" },
 ];
 
-const TEMPLATES: { id: TemplateId; label: string; desc: string; badge?: string }[] = [
-  { id: "cinematic", label: "Cinematic", desc: "Dark elegant, full-bleed hero" },
-  { id: "futuristic", label: "Futuristic", desc: "Bento-grid spatial layout", badge: "NEW" },
-  { id: "premium", label: "Premium", desc: "Clean, light UI focused on typography" },
+const TEMPLATES: { id: TemplateId; label: string; desc: string; badge?: string; emoji: string }[] = [
+  { id: "cinematic",    label: "Cinematic",    desc: "Dark elegant, full-bleed hero",         emoji: "🎬" },
+  { id: "futuristic",   label: "Futuristic",   desc: "Bento-grid spatial layout",             emoji: "🚀", badge: "HOT" },
+  { id: "premium",      label: "Premium",      desc: "Clean, light bento UI",                 emoji: "✨" },
+  { id: "chic-tech",    label: "Chic Tech",    desc: "Glassmorphic indigo-purple",            emoji: "💎", badge: "NEW" },
+  { id: "corporate-ai",label: "Corporate AI",  desc: "Clean navy enterprise style",           emoji: "🏢", badge: "NEW" },
+  { id: "elegant",      label: "Elegant Dev",  desc: "Dark terminal with green accent",        emoji: "💻", badge: "NEW" },
+  { id: "professional", label: "Professional", desc: "Minimal editorial portfolio",            emoji: "📄", badge: "NEW" },
+  { id: "robotics",     label: "Robotics",     desc: "Futuristic robotics & AI engineer",     emoji: "🤖", badge: "NEW" },
 ];
 
 // ── Live Preview Canvas ───────────────────────────────────────────────────────
@@ -35,8 +45,13 @@ function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfi
     profile_image: config.profileImage || null,
   };
 
-  if (config.templateId === "futuristic") return <FuturisticTemplateClient p={p} isPreview={true} />;
-  if (config.templateId === "premium") return <PremiumTemplateClient p={p} isPreview={true} />;
+  if (config.templateId === "futuristic")    return <FuturisticTemplateClient              p={p} isPreview={true} />;
+  if (config.templateId === "premium")       return <PremiumTemplateClient                 p={p} isPreview={true} />;
+  if (config.templateId === "chic-tech")     return <ChicTechTemplateClient                p={p} isPreview={true} />;
+  if (config.templateId === "corporate-ai")  return <CorporateAITemplateClient             p={p} isPreview={true} />;
+  if (config.templateId === "elegant")       return <ElegantDeveloperTemplateClient        p={p} isPreview={true} />;
+  if (config.templateId === "professional")  return <ProfessionalPortfolioTemplateClient   p={p} isPreview={true} />;
+  if (config.templateId === "robotics")      return <RoboticsPortfolioTemplateClient       p={p} isPreview={true} />;
   return <CinematicTemplateClient p={p} isPreview={true} />;
 }
 
@@ -323,18 +338,19 @@ export default function PortfolioBuilderPage() {
             {/* ── DESIGN TAB */}
             {activeTab === "design" && <>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Portfolio Template</p>
-                <div className="grid grid-cols-2 gap-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">Portfolio Template <span className="text-white/20">({TEMPLATES.length} available)</span></p>
+                <div className="grid grid-cols-2 gap-2">
                   {TEMPLATES.map(t => (
                     <button key={t.id} onClick={() => setConfig(c => ({ ...c, templateId: t.id }))}
-                      className="p-4 rounded-xl border text-left transition-all flex flex-col h-full relative"
+                      className="p-3 rounded-xl border text-left transition-all flex flex-col h-full relative"
                       style={config.templateId === t.id ? { borderColor: hex, backgroundColor: `${hex}15` } : { borderColor: "#2a2d3a", backgroundColor: "#171820" }}>
                       {t.badge && (
-                        <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider" style={{ backgroundColor: hex, color: "#fff" }}>{t.badge}</span>
+                        <span className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-wider" style={{ backgroundColor: hex, color: "#fff" }}>{t.badge}</span>
                       )}
-                      <p className="text-sm font-bold text-white mb-1">{t.label}</p>
+                      <span className="text-xl mb-1.5 leading-none">{t.emoji}</span>
+                      <p className="text-xs font-bold text-white mb-0.5 leading-tight">{t.label}</p>
                       <p className="text-[10px] text-white/40 leading-snug flex-1">{t.desc}</p>
-                      {config.templateId === t.id && <div className="mt-2 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white" style={{ backgroundColor: hex }}>✓</div>}
+                      {config.templateId === t.id && <div className="mt-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white" style={{ backgroundColor: hex }}>✓</div>}
                     </button>
                   ))}
                 </div>

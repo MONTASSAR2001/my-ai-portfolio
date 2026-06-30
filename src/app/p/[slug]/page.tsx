@@ -1,14 +1,20 @@
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import CinematicTemplateClient  from './CinematicTemplate.client';
-import FuturisticTemplateClient from './FuturisticTemplate.client';
-import PremiumTemplateClient    from './PremiumTemplate.client';
+import CinematicTemplateClient        from './CinematicTemplate.client';
+import FuturisticTemplateClient       from './FuturisticTemplate.client';
+import PremiumTemplateClient          from './PremiumTemplate.client';
+import ChicTechTemplateClient         from './ChicTechTemplate.client';
+import CorporateAITemplateClient      from './CorporateAITemplate.client';
+import ElegantDeveloperTemplateClient from './ElegantDeveloperTemplate.client';
+import ProfessionalPortfolioTemplateClient from './ProfessionalPortfolioTemplate.client';
+import RoboticsPortfolioTemplateClient    from './RoboticsPortfolioTemplate.client';
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface PortfolioRow {
   id: string;
-  slug: string; summary?: string; skills?: string[]; experience?: ExpItem[];
+  slug: string; name?: string; role?: string; email?: string;
+  summary?: string; skills?: string[]; experience?: ExpItem[];
   layout?: { root?: { props?: Record<string, unknown> } } | null;
   profile_image?: string | null; template_id?: string;
   has_paid?: boolean; is_published?: boolean;
@@ -23,7 +29,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq('slug', slug)
     .single<PortfolioRow>();
 
-  // Return minimal metadata for unpublished portfolios — don't leak the name.
   if (!data || !data.has_paid || !data.is_published) {
     return { title: 'Portfolio Not Available — PortfolioAI' };
   }
@@ -45,10 +50,6 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
     .single<PortfolioRow>();
 
   // ── Payment / publish gate ──────────────────────────────────────────────────
-  // SECURITY: We check both flags. has_paid is set by the webhook after payment.
-  // is_published can be toggled independently in future (e.g. maintenance mode).
-  // If either is false/null we return notFound() — the template is NOT rendered
-  // and its code is NOT sent to the client.
   if (!p || !p.has_paid || !p.is_published) {
     return notFound();
   }
@@ -56,8 +57,13 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
   const rootProps  = p.layout?.root?.props ?? {};
   const templateId = (rootProps.templateId as string) ?? p.template_id ?? 'cinematic';
 
-  if (templateId === 'futuristic') return <FuturisticTemplateClient p={p} />;
-  if (templateId === 'premium')    return <PremiumTemplateClient    p={p} />;
+  if (templateId === 'futuristic')   return <FuturisticTemplateClient              p={p} />;
+  if (templateId === 'premium')      return <PremiumTemplateClient                 p={p} />;
+  if (templateId === 'chic-tech')    return <ChicTechTemplateClient                p={p} />;
+  if (templateId === 'corporate-ai') return <CorporateAITemplateClient             p={p} />;
+  if (templateId === 'elegant')      return <ElegantDeveloperTemplateClient        p={p} />;
+  if (templateId === 'professional') return <ProfessionalPortfolioTemplateClient   p={p} />;
+  if (templateId === 'robotics')     return <RoboticsPortfolioTemplateClient       p={p} />;
   // default → cinematic
   return <CinematicTemplateClient p={p} />;
 }
