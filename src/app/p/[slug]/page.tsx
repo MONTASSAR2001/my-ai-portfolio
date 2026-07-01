@@ -9,6 +9,7 @@ import CorporateAITemplateClient      from './CorporateAITemplate.client';
 import ElegantDeveloperTemplateClient from './ElegantDeveloperTemplate.client';
 import ProfessionalPortfolioTemplateClient from './ProfessionalPortfolioTemplate.client';
 import RoboticsPortfolioTemplateClient    from './RoboticsPortfolioTemplate.client';
+import CyberneticTemplateClient           from './CyberneticTemplate.client';
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface PortfolioRow {
@@ -64,6 +65,7 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
   if (templateId === 'elegant')      return <ElegantDeveloperTemplateClient        p={p} />;
   if (templateId === 'professional') return <ProfessionalPortfolioTemplateClient   p={p} />;
   if (templateId === 'robotics')     return <RoboticsPortfolioTemplateClient       p={p} />;
+  if (templateId === 'cybernetic')   return <CyberneticTemplateClient              p={p} />;
   // default → cinematic
   return <CinematicTemplateClient p={p} />;
 }
