@@ -3,41 +3,70 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabaseBrowser as supabase } from "@/lib/supabase";
 
+/* ─── Navigation config ─────────────────────────────────────────── */
 const NAV_ITEMS = [
   {
     id: "nav-hub",
     label: "Dashboard",
+    moniker: "01",
     href: "/dashboard",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
       </svg>
     ),
   },
   {
     id: "nav-portfolio",
     label: "Portfolio Builder",
+    moniker: "02",
     href: "/dashboard/portfolio",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-12" />
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
   },
   {
     id: "nav-cv-maker",
     label: "AI CV Maker",
+    moniker: "03",
     href: "/dashboard/cv-maker",
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
       </svg>
     ),
   },
 ];
 
+/* ─── Sidebar animation variants ───────────────────────────────── */
+const sidebarVariants = {
+  hidden: { x: -80, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const navItemVariants = {
+  hidden: { x: -24, opacity: 0 },
+  visible: (i: number) => ({
+    x: 0,
+    opacity: 1,
+    transition: { delay: 0.3 + i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  }),
+};
+
+/* ─── Component ──────────────────────────────────────────────────── */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -62,101 +91,343 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.replace("/");
   };
 
+  /* Loading state */
   if (!authChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#09090B" }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black animate-pulse text-white shadow-lg shadow-violet-900/40">
-            AI
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "var(--color-obsidian)" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          {/* Animated brand mark */}
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                border: "1px solid var(--color-gold-dim)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--color-gold)",
+                letterSpacing: "0.1em",
+                animation: "pulse 2s ease-in-out infinite",
+              }}
+            >
+              AI
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                inset: -4,
+                border: "1px solid var(--color-gold-dim)",
+                opacity: 0.3,
+                animation: "spin 3s linear infinite",
+              }}
+            />
           </div>
-          <p className="text-sm" style={{ color: "#71717A" }}>Verifying session…</p>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-text-secondary)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            Verifying session…
+          </p>
         </div>
       </div>
     );
   }
 
+  const userInitial = userEmail?.[0]?.toUpperCase() ?? "?";
+
   return (
-    <div className="min-h-screen text-white flex" style={{ backgroundColor: "#09090B" }}>
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside
-        className="fixed left-0 top-0 bottom-0 w-60 z-40 flex flex-col"
-        style={{ backgroundColor: "#18181B", borderRight: "1px solid #27272A" }}
+    <div
+      className="min-h-screen flex"
+      style={{ backgroundColor: "var(--color-obsidian)", color: "var(--color-text-primary)" }}
+    >
+      {/* ── Sidebar ──────────────────────────────────────────────── */}
+      <motion.aside
+        variants={sidebarVariants}
+        initial="hidden"
+        animate="visible"
+        className="fixed left-0 top-0 bottom-0 z-40 flex flex-col"
+        style={{
+          width: 220,
+          backgroundColor: "var(--color-void)",
+          borderRight: "1px solid var(--color-border)",
+        }}
       >
-        {/* Logo */}
-        <div className="p-5" style={{ borderBottom: "1px solid #27272A" }}>
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black text-white shadow-lg shadow-violet-900/30 group-hover:shadow-violet-900/50 transition-shadow">
-              AI
+        {/* Brand */}
+        <div
+          style={{
+            padding: "24px 20px",
+            borderBottom: "1px solid var(--color-border)",
+          }}
+        >
+          <Link href="/" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  border: "1px solid var(--color-gold-dim)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: "var(--color-gold)",
+                  letterSpacing: "0.05em",
+                  flexShrink: 0,
+                }}
+              >
+                AI
+              </div>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "var(--color-text-primary)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                Portfolio
+                <em style={{ color: "var(--color-gold)", fontStyle: "italic" }}>AI</em>
+              </span>
             </div>
-            <span className="font-bold text-sm tracking-tight text-white">
-              Portfolio<span style={{ color: "#818CF8" }}>AI</span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 9,
+                color: "var(--color-text-muted)",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+                paddingLeft: 38,
+              }}
+            >
+              v2.0 — Studio
             </span>
           </Link>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 p-3 space-y-0.5">
-          {NAV_ITEMS.map((item) => {
+        {/* Horizontal rule accent */}
+        <div style={{ padding: "16px 20px 0" }}>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9,
+              color: "var(--color-text-muted)",
+              letterSpacing: "0.3em",
+              textTransform: "uppercase",
+            }}
+          >
+            Navigation
+          </span>
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
+          {NAV_ITEMS.map((item, i) => {
             const isActive = pathname === item.href;
             return (
-              <Link
+              <motion.div
                 key={item.id}
-                id={item.id}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
-                style={
-                  isActive
-                    ? { backgroundColor: "#3F3F46", color: "#FAFAFA" }
-                    : { color: "#A1A1AA" }
-                }
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = "#27272A"; (e.currentTarget as HTMLElement).style.color = "#E4E4E7"; }}
-                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#A1A1AA"; } }}
+                custom={i}
+                variants={navItemVariants}
+                initial="hidden"
+                animate="visible"
               >
-                <span style={{ color: isActive ? "#818CF8" : "#52525B" }}>{item.icon}</span>
-                {item.label}
-                {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                )}
-              </Link>
+                <Link
+                  id={item.id}
+                  href={item.href}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 10px",
+                    textDecoration: "none",
+                    position: "relative",
+                    transition: "all 0.2s ease",
+                    borderLeft: isActive ? "2px solid var(--color-gold)" : "2px solid transparent",
+                    backgroundColor: isActive ? "rgba(201,168,76,0.05)" : "transparent",
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.03)";
+                      (e.currentTarget as HTMLElement).style.borderLeftColor = "var(--color-border-hi)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                      (e.currentTarget as HTMLElement).style.borderLeftColor = "transparent";
+                    }
+                  }}
+                >
+                  {/* Moniker */}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      color: isActive ? "var(--color-gold)" : "var(--color-text-muted)",
+                      letterSpacing: "0.1em",
+                      flexShrink: 0,
+                      width: 18,
+                    }}
+                  >
+                    {item.moniker}
+                  </span>
+                  {/* Icon */}
+                  <span style={{ color: isActive ? "var(--color-gold)" : "var(--color-text-muted)", flexShrink: 0 }}>
+                    {item.icon}
+                  </span>
+                  {/* Label */}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      fontWeight: isActive ? 500 : 400,
+                      color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              </motion.div>
             );
           })}
         </nav>
 
+        {/* Decorative divider line */}
+        <div style={{ margin: "0 20px", height: 1, backgroundColor: "var(--color-border)" }} />
+
         {/* User section */}
-        <div className="p-3" style={{ borderTop: "1px solid #27272A" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65, duration: 0.5 }}
+          style={{ padding: 12 }}
+        >
+          {/* User pill */}
           <div
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1"
-            style={{ backgroundColor: "#27272A", border: "1px solid #3F3F46" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
+              border: "1px solid var(--color-border)",
+              marginBottom: 4,
+            }}
           >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black flex-shrink-0 text-white">
-              {userEmail?.[0]?.toUpperCase() ?? "?"}
+            <div
+              style={{
+                width: 26,
+                height: 26,
+                border: "1px solid var(--color-gold-dim)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--color-gold)",
+                flexShrink: 0,
+              }}
+            >
+              {userInitial}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium truncate" style={{ color: "#D4D4D8" }}>{userEmail}</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[10px]" style={{ color: "#52525B" }}>Active</span>
+            <div style={{ minWidth: 0 }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  color: "var(--color-text-primary)",
+                  margin: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userEmail}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    backgroundColor: "#4ade80",
+                    display: "block",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 9,
+                    color: "var(--color-text-muted)",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Online
+                </span>
               </div>
             </div>
           </div>
+
+          {/* Sign out */}
           <button
             id="sign-out-btn"
             onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150"
-            style={{ color: "#71717A" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#2D1515"; (e.currentTarget as HTMLElement).style.color = "#F87171"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#71717A"; }}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "7px 10px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              color: "var(--color-text-muted)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              textAlign: "left",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.color = "#f87171";
+              (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(248,113,113,0.05)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.color = "var(--color-text-muted)";
+              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             Sign Out
           </button>
-        </div>
-      </aside>
+        </motion.div>
+      </motion.aside>
 
-      {/* ── Main content ─────────────────────────────────────────────────── */}
-      <main className="flex-1 ml-60 relative min-h-screen" style={{ backgroundColor: "#09090B" }}>
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <main
+        style={{
+          flex: 1,
+          marginLeft: 220,
+          minHeight: "100vh",
+          backgroundColor: "var(--color-obsidian)",
+          position: "relative",
+        }}
+      >
         {children}
       </main>
     </div>

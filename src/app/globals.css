@@ -1,6 +1,97 @@
 @import "tailwindcss";
 
+/* ─── Design System Tokens ──────────────────────────────────────── */
+:root {
+  /* Palette */
+  --color-obsidian:   #0A0A0C;
+  --color-void:       #0D0D10;
+  --color-surface:    #111116;
+  --color-surface-2:  #16161D;
+  --color-border:     #1E1E28;
+  --color-border-hi:  #2A2A38;
+
+  /* Accents */
+  --color-gold:       #C9A84C;
+  --color-gold-dim:   #8A6E2F;
+  --color-gold-glow:  rgba(201, 168, 76, 0.15);
+  --color-gold-glow-strong: rgba(201, 168, 76, 0.3);
+  --color-amber:      #E8B96A;
+  --color-rust:       #B85C38;
+
+  /* Text */
+  --color-text-primary:   #EEEAE0;
+  --color-text-secondary: #6A6A7A;
+  --color-text-muted:     #3A3A4A;
+
+  /* Fonts */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+
+  /* Shadows */
+  --shadow-card:  0 0 0 1px var(--color-border), 0 24px 64px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-gold:  0 0 40px var(--color-gold-glow), 0 0 80px rgba(201,168,76,0.05);
+}
+
+/* ─── Base Reset ────────────────────────────────────────────────── */
+html,
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #0A0A0C !important;
+  color: #EEEAE0;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Animated Grain Texture ────────────────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -200%;
+  width: 400%;
+  height: 400%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 0;
+  animation: grain-drift 8s steps(10, end) infinite;
+  will-change: transform;
+}
+
+@keyframes grain-drift {
+  0%  { transform: translate(0, 0); }
+  10% { transform: translate(-4%, -6%); }
+  20% { transform: translate(-9%, 3%); }
+  30% { transform: translate(5%, -8%); }
+  40% { transform: translate(-7%, 5%); }
+  50% { transform: translate(-5%, 9%); }
+  60% { transform: translate(8%, -3%); }
+  70% { transform: translate(3%, 7%); }
+  80% { transform: translate(-8%, -4%); }
+  90% { transform: translate(6%, 2%); }
+  100%{ transform: translate(0, 0); }
+}
+
+/* ─── Typography Utilities ──────────────────────────────────────── */
+.font-display  { font-family: var(--font-display); }
+.font-mono-ui  { font-family: var(--font-mono); }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 4px; }
+::-webkit-scrollbar-track        { background: var(--color-void); }
+::-webkit-scrollbar-thumb        { background: var(--color-border-hi); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--color-gold-dim); }
+
+/* ─── Selection ─────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-gold-glow-strong);
+  color: var(--color-amber);
 }

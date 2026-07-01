@@ -3,8 +3,116 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { supabaseBrowser as supabase } from "@/lib/supabase";
 
+/* ─── Animation Variants ────────────────────────────────────────── */
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+};
+
+/* ─── Styled input component ────────────────────────────────────── */
+function FormField({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  required,
+  rightElement,
+  accentLabel,
+}: {
+  id: string;
+  label: string;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  autoComplete: string;
+  required?: boolean;
+  rightElement?: React.ReactNode;
+  accentLabel?: React.ReactNode;
+}) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <motion.div variants={itemVariants}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        }}
+      >
+        <label
+          htmlFor={id}
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9,
+            color: focused ? "var(--color-gold)" : "var(--color-text-secondary)",
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            transition: "color 0.2s ease",
+          }}
+        >
+          {label}
+        </label>
+        {accentLabel}
+      </div>
+      <div style={{ position: "relative" }}>
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required={required}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            width: "100%",
+            padding: "13px 16px",
+            paddingRight: rightElement ? 44 : 16,
+            backgroundColor: focused ? "rgba(201,168,76,0.03)" : "var(--color-surface)",
+            border: `1px solid ${focused ? "var(--color-gold-dim)" : "var(--color-border-hi)"}`,
+            borderRadius: 0,
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            color: "var(--color-text-primary)",
+            outline: "none",
+            transition: "border-color 0.2s ease, background-color 0.2s ease",
+            boxSizing: "border-box",
+          }}
+        />
+        {rightElement && (
+          <div
+            style={{
+              position: "absolute",
+              right: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--color-text-muted)",
+            }}
+          >
+            {rightElement}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Page Component ────────────────────────────────────────────── */
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -30,152 +138,318 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative z-10 w-full max-w-md">
-      {/* Logo */}
-      <div className="flex items-center justify-center gap-2.5 mb-10">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-black shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-shadow">
-            AI
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      style={{ width: "100%", maxWidth: 400 }}
+    >
+      {/* Brand mark */}
+      <motion.div
+        variants={itemVariants}
+        style={{ marginBottom: 44 }}
+      >
+        <Link href="/" style={{ textDecoration: "none", display: "inline-flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                border: "1px solid var(--color-gold-dim)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 9,
+                fontWeight: 700,
+                color: "var(--color-gold)",
+                letterSpacing: "0.05em",
+              }}
+            >
+              AI
+            </div>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 16,
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+              }}
+            >
+              Portfolio<em style={{ fontStyle: "italic", color: "var(--color-gold)" }}>AI</em>
+            </span>
           </div>
-          <span className="font-bold text-white tracking-tight">
-            Portfolio<span className="text-violet-400">AI</span>
-          </span>
         </Link>
-      </div>
+      </motion.div>
 
-      {/* Card */}
-      <div className="rounded-3xl border border-white/8 bg-white/[0.03] backdrop-blur-xl p-8 md:p-10 shadow-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Welcome back</h1>
-          <p className="mt-2 text-sm text-white/45">Sign in to your account to continue</p>
-        </div>
+      {/* Heading */}
+      <motion.div variants={itemVariants} style={{ marginBottom: 36 }}>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9,
+            letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            color: "var(--color-gold)",
+            marginBottom: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span style={{ display: "inline-block", width: 20, height: 1, backgroundColor: "var(--color-gold)" }} />
+          Studio Access
+        </p>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 32,
+            fontWeight: 900,
+            color: "var(--color-text-primary)",
+            margin: 0,
+            lineHeight: 1.1,
+          }}
+        >
+          Welcome back.
+        </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--color-text-secondary)",
+            marginTop: 10,
+            lineHeight: 1.7,
+          }}
+        >
+          Sign in to access your portfolio tools.
+        </p>
+      </motion.div>
 
-        <form id="login-form" onSubmit={handleLogin} className="space-y-4">
-          {/* Email */}
-          <div>
-            <label htmlFor="login-email" className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
-              Email
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <input
-                id="login-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200"
-              />
-            </div>
-          </div>
+      {/* Form */}
+      <form id="login-form" onSubmit={handleLogin}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <FormField
+            id="login-email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
 
-          {/* Password */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label htmlFor="login-password" className="block text-xs font-semibold text-white/50 uppercase tracking-wider">
-                Password
-              </label>
-              <a href="#" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                Forgot password?
+          <FormField
+            id="login-password"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={setPassword}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+            accentLabel={
+              <a
+                href="#"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  color: "var(--color-gold-dim)",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  transition: "color 0.2s ease",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-gold)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-gold-dim)"; }}
+              >
+                Forgot?
               </a>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <input
-                id="login-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200"
-              />
+            }
+            rightElement={
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/30 hover:text-white/60 transition-colors"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: "var(--color-text-muted)" }}
               >
                 {showPassword ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
               </button>
-            </div>
-          </div>
+            }
+          />
 
           {/* Error */}
           {error && (
-            <div id="login-error" className="flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/8 px-4 py-3">
-              <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              id="login-error"
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                padding: "12px 14px",
+                border: "1px solid rgba(248,113,113,0.3)",
+                borderLeft: "3px solid #f87171",
+                backgroundColor: "rgba(248,113,113,0.05)",
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <p className="text-xs text-red-300 leading-relaxed">{error}</p>
-            </div>
+              <p style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#fca5a5", margin: 0, lineHeight: 1.6 }}>
+                {error}
+              </p>
+            </motion.div>
           )}
 
           {/* Submit */}
-          <button
-            id="login-submit-btn"
-            type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:from-white/10 disabled:to-white/10 disabled:text-white/30 disabled:cursor-not-allowed font-bold text-sm tracking-wide shadow-lg shadow-violet-500/20 transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Signing in…
-              </>
-            ) : (
-              "Sign In"
-            )}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="mt-7 flex items-center gap-3">
-          <div className="flex-1 h-px bg-white/8" />
-          <span className="text-xs text-white/25">or</span>
-          <div className="flex-1 h-px bg-white/8" />
+          <motion.div variants={itemVariants}>
+            <button
+              id="login-submit-btn"
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: "100%",
+                padding: "14px 20px",
+                marginTop: 4,
+                backgroundColor: isLoading ? "var(--color-surface-2)" : "var(--color-gold)",
+                border: "1px solid",
+                borderColor: isLoading ? "var(--color-border-hi)" : "var(--color-gold)",
+                borderRadius: 0,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: isLoading ? "var(--color-text-muted)" : "var(--color-obsidian)",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => {
+                if (!isLoading) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-amber)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--color-amber)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isLoading) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-gold)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--color-gold)";
+                }
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
+                    <path d="M21 12a9 9 0 11-6.219-8.56" />
+                  </svg>
+                  Authenticating…
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </motion.div>
         </div>
+      </form>
 
-        {/* Sign up link */}
-        <p className="mt-6 text-center text-sm text-white/35">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-semibold transition-colors">
-            Create one free
-          </Link>
-        </p>
-      </div>
+      {/* Divider */}
+      <motion.div
+        variants={itemVariants}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          margin: "28px 0",
+        }}
+      >
+        <div style={{ flex: 1, height: 1, backgroundColor: "var(--color-border)" }} />
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--color-text-muted)", letterSpacing: "0.2em" }}>
+          OR
+        </span>
+        <div style={{ flex: 1, height: 1, backgroundColor: "var(--color-border)" }} />
+      </motion.div>
+
+      {/* Sign up link */}
+      <motion.p
+        variants={itemVariants}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--color-text-muted)",
+          textAlign: "center",
+          margin: 0,
+        }}
+      >
+        No account?{" "}
+        <Link
+          href="/signup"
+          style={{
+            color: "var(--color-gold)",
+            textDecoration: "none",
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+            transition: "color 0.2s ease",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-amber)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-gold)"; }}
+        >
+          Create one free →
+        </Link>
+      </motion.p>
 
       {/* Back link */}
-      <div className="mt-6 text-center">
-        <Link href="/" className="text-xs text-white/25 hover:text-white/50 transition-colors inline-flex items-center gap-1.5">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      <motion.div
+        variants={itemVariants}
+        style={{ textAlign: "center", marginTop: 24 }}
+      >
+        <Link
+          href="/"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9,
+            color: "var(--color-text-muted)",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            transition: "color 0.2s ease",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-text-secondary)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-text-muted)"; }}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
           </svg>
           Back to home
         </Link>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
