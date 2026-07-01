@@ -64,41 +64,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-[#080910] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#09090B" }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-black animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black animate-pulse text-white shadow-lg shadow-violet-900/40">
             AI
           </div>
-          <p className="text-sm text-white/30">Verifying session…</p>
+          <p className="text-sm" style={{ color: "#71717A" }}>Verifying session…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#080910] text-white flex">
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/6 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600/5 rounded-full blur-[100px]" />
-      </div>
-
+    <div className="min-h-screen text-white flex" style={{ backgroundColor: "#09090B" }}>
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="fixed left-0 top-0 bottom-0 w-60 z-40 flex flex-col border-r border-white/6 bg-white/[0.01] backdrop-blur-xl">
+      <aside
+        className="fixed left-0 top-0 bottom-0 w-60 z-40 flex flex-col"
+        style={{ backgroundColor: "#18181B", borderRight: "1px solid #27272A" }}
+      >
         {/* Logo */}
-        <div className="p-5 border-b border-white/6">
+        <div className="p-5" style={{ borderBottom: "1px solid #27272A" }}>
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-black shadow-md shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black text-white shadow-lg shadow-violet-900/30 group-hover:shadow-violet-900/50 transition-shadow">
               AI
             </div>
-            <span className="font-bold text-sm tracking-tight">
-              Portfolio<span className="text-violet-400">AI</span>
+            <span className="font-bold text-sm tracking-tight text-white">
+              Portfolio<span style={{ color: "#818CF8" }}>AI</span>
             </span>
           </Link>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -106,37 +103,49 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.id}
                 id={item.id}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                style={
                   isActive
-                    ? "bg-violet-500/15 text-violet-300 border border-violet-500/20"
-                    : "text-white/45 hover:text-white/80 hover:bg-white/5"
-                }`}
+                    ? { backgroundColor: "#3F3F46", color: "#FAFAFA" }
+                    : { color: "#A1A1AA" }
+                }
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = "#27272A"; (e.currentTarget as HTMLElement).style.color = "#E4E4E7"; }}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#A1A1AA"; } }}
               >
-                <span className={isActive ? "text-violet-400" : "text-white/30"}>{item.icon}</span>
+                <span style={{ color: isActive ? "#818CF8" : "#52525B" }}>{item.icon}</span>
                 {item.label}
+                {isActive && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* User section */}
-        <div className="p-3 border-t border-white/6">
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/[0.02] border border-white/6 mb-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xs font-black flex-shrink-0">
+        <div className="p-3" style={{ borderTop: "1px solid #27272A" }}>
+          <div
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1"
+            style={{ backgroundColor: "#27272A", border: "1px solid #3F3F46" }}
+          >
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-xs font-black flex-shrink-0 text-white">
               {userEmail?.[0]?.toUpperCase() ?? "?"}
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-white/70 font-medium truncate">{userEmail}</p>
+              <p className="text-xs font-medium truncate" style={{ color: "#D4D4D8" }}>{userEmail}</p>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[10px] text-white/30">Active</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px]" style={{ color: "#52525B" }}>Active</span>
               </div>
             </div>
           </div>
           <button
             id="sign-out-btn"
             onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-white/35 hover:text-red-400 hover:bg-red-500/8 transition-all duration-200 border border-transparent hover:border-red-500/15"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150"
+            style={{ color: "#71717A" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#2D1515"; (e.currentTarget as HTMLElement).style.color = "#F87171"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#71717A"; }}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -147,7 +156,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <main className="flex-1 ml-60 relative z-10 min-h-screen">
+      <main className="flex-1 ml-60 relative min-h-screen" style={{ backgroundColor: "#09090B" }}>
         {children}
       </main>
     </div>
