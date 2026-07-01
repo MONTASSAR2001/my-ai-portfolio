@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Github, Terminal, Cpu, Zap, Mic, X, Sparkles } from "lucide-react";
+import { ArrowUpRight, Terminal, Cpu, Zap, Mic, X, Sparkles } from "lucide-react";
 import CommandPalette from "../../../components/CommandPalette";
 import TLDRToggle from "../../../components/TLDRToggle";
 import TimeAwareGreeting from "../../../components/TimeAwareGreeting";
@@ -348,7 +348,7 @@ export default function CyberneticTemplateClient({ p, isPreview }: { p: Portfoli
         <div className="flex items-center gap-4">
           <TLDRToggle isTldr={isTldr} setIsTldr={setIsTldr} />
           <a href="#" className="cybernetic-glass hidden sm:flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-widest hover:cybernetic-neon-glow transition-shadow text-white">
-            <Github className="h-3.5 w-3.5" /> Source
+            <Terminal className="h-3.5 w-3.5" /> Source
           </a>
         </div>
       </header>
