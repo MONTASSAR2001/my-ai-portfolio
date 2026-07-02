@@ -3,7 +3,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import CinematicTemplateClient        from "@/app/p/[slug]/CinematicTemplate.client";
 import FuturisticTemplateClient       from "@/app/p/[slug]/FuturisticTemplate.client";
 import PremiumTemplateClient          from "@/app/p/[slug]/PremiumTemplate.client";
@@ -12,44 +11,24 @@ import CorporateAITemplateClient      from "@/app/p/[slug]/CorporateAITemplate.c
 import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTemplate.client";
 import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
 import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
+import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock } from "./SpatialPanels";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
-interface CVData { name: string; role?: string; email?: string; summary: string; skills: string[]; experience: ExpItem[]; }
-type SidebarTab = "content" | "design";
-type TemplateId = "cinematic" | "futuristic" | "premium" | "chic-tech" | "corporate-ai" | "elegant" | "professional" | "robotics";
+interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; }
+type TemplateId = "cinematic"|"futuristic"|"premium"|"chic-tech"|"corporate-ai"|"elegant"|"professional"|"robotics";
 interface SiteConfig { templateId: TemplateId; accent: string; profileImage: string; }
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-const BG_APP    = "#09090B";
-const BG_PANEL  = "#121214";
-const BG_INPUT  = "transparent";
-const BG_CARD   = "#0E0E10";
-const BORDER    = "#1a1a1f";
-const BORDER_LT = "#2a2a35";
-const TEXT_MUT  = "#52526a";
-const TEXT_SUB  = "#8888a8";
-const CYAN_GLOW = "#22d3ee";
-
-const ACCENTS = [
-  { id: "indigo",  hex: "#6366f1" }, { id: "violet",  hex: "#8b5cf6" },
-  { id: "emerald", hex: "#10b981" }, { id: "rose",    hex: "#f43f5e" },
-  { id: "amber",   hex: "#f59e0b" }, { id: "sky",     hex: "#0ea5e9" },
-  { id: "white",   hex: "#f8fafc" }, { id: "slate",   hex: "#64748b" },
+const TEMPLATES: { id: TemplateId; label: string }[] = [
+  { id:"cinematic",    label:"Cinematic"    },
+  { id:"futuristic",   label:"Futuristic"   },
+  { id:"premium",      label:"Premium"      },
+  { id:"chic-tech",    label:"Chic Tech"    },
+  { id:"corporate-ai", label:"Corporate AI" },
+  { id:"elegant",      label:"Elegant Dev"  },
+  { id:"professional", label:"Professional" },
+  { id:"robotics",     label:"Robotics"     },
 ];
 
-const TEMPLATES: { id: TemplateId; label: string; desc: string; badge?: string; emoji: string }[] = [
-  { id: "cinematic",    label: "Cinematic",    desc: "Dark elegant, full-bleed hero",       emoji: "🎬" },
-  { id: "futuristic",   label: "Futuristic",   desc: "Bento-grid spatial layout",           emoji: "🚀", badge: "HOT" },
-  { id: "premium",      label: "Premium",      desc: "Clean, light bento UI",               emoji: "✨" },
-  { id: "chic-tech",    label: "Chic Tech",    desc: "Glassmorphic indigo-purple",          emoji: "💎", badge: "NEW" },
-  { id: "corporate-ai", label: "Corporate AI", desc: "Clean navy enterprise style",         emoji: "🏢", badge: "NEW" },
-  { id: "elegant",      label: "Elegant Dev",  desc: "Dark terminal with green accent",     emoji: "💻", badge: "NEW" },
-  { id: "professional", label: "Professional", desc: "Minimal editorial portfolio",          emoji: "📄", badge: "NEW" },
-  { id: "robotics",     label: "Robotics",     desc: "Futuristic robotics & AI engineer",  emoji: "🤖", badge: "NEW" },
-];
-
-// ── Live Preview Canvas ───────────────────────────────────────────────────────
 function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfig; slug: string }) {
   const p = { ...cv, slug: slug || "your-slug", profile_image: config.profileImage || null };
   if (config.templateId === "futuristic")   return <FuturisticTemplateClient              p={p} isPreview={true} />;
@@ -62,412 +41,279 @@ function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfi
   return <CinematicTemplateClient p={p} isPreview={true} />;
 }
 
-// ── Section label ─────────────────────────────────────────────────────────────
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#a1a1c0", fontFamily: "'JetBrains Mono', monospace", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
-      <span style={{ display: "inline-block", width: 18, height: 1, background: `linear-gradient(90deg, #22d3ee60, transparent)` }} />
-      {children}
-    </p>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PortfolioBuilderPage() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<SidebarTab>("content");
-  const [cv, setCv] = useState<CVData>({ name: "", summary: "", skills: [], experience: [] });
-  const [config, setConfig] = useState<SiteConfig>({ templateId: "cinematic", accent: "violet", profileImage: "" });
+  const [cv, setCv] = useState<CVData>({ name:"", summary:"", skills:[], experience:[] });
+  const [config, setConfig] = useState<SiteConfig>({ templateId:"cinematic", accent:"violet", profileImage:"" });
   const [slug, setSlug] = useState("");
   const [slugErr, setSlugErr] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishMsg, setPublishMsg] = useState("");
-  const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
+  const [publishStatus, setPublishStatus] = useState<"idle"|"success"|"error">("idle");
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractErr, setExtractErr] = useState("");
+  const [focusedField, setFocusedField] = useState<string|null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (searchParams.get("published") === "1") {
-      setPublishStatus("success");
-      setPublishMsg("🎉 Portfolio is live!");
-      const returnedSlug = searchParams.get("slug");
-      if (returnedSlug) setSlug(returnedSlug);
+      setPublishStatus("success"); setPublishMsg("🎉 Portfolio is live!");
+      const s = searchParams.get("slug"); if (s) setSlug(s);
     } else if (searchParams.get("cancelled") === "1") {
-      setPublishStatus("error");
-      setPublishMsg("Payment cancelled.");
+      setPublishStatus("error"); setPublishMsg("Payment cancelled.");
     }
   }, [searchParams]);
 
-  const hex = ACCENTS.find(a => a.id === config.accent)?.hex ?? "#8b5cf6";
-
-  // Spotlight inputs: focused = full brightness + cyan glow; others dim
-  const [focusedField, setFocusedField] = useState<string | null>(null);
-  const mkInp = (id: string) => {
-    const active = focusedField === id;
-    const inactive = focusedField !== null && !active;
-    return {
-      onFocus: () => setFocusedField(id),
-      onBlur:  () => setFocusedField(null),
-      style: {
-        width: "100%",
-        background: active ? "rgba(34,211,238,0.03)" : "transparent",
-        border: "none",
-        borderBottom: `1.5px solid ${active ? CYAN_GLOW : inactive ? "#16161e" : BORDER_LT}`,
-        outline: "none",
-        color: inactive ? "#3a3a52" : "#e8e8f8",
-        fontSize: 13,
-        padding: "8px 4px",
-        fontFamily: "'JetBrains Mono', monospace",
-        resize: "none" as const,
-        boxShadow: active ? `0 2px 12px rgba(34,211,238,0.18), 0 1px 0 ${CYAN_GLOW}60` : "none",
-        transition: "all 0.25s ease",
-        opacity: inactive ? 0.4 : 1,
-        borderRadius: active ? "4px 4px 0 0" : 0,
-      } as React.CSSProperties,
-    };
-  };
-
   const validateSlug = (v: string) => {
-    const c = v.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    setSlug(c); setSlugErr(c.length > 0 && c.length < 3 ? "Min 3 chars" : "");
-    return c;
+    const c = v.toLowerCase().replace(/[^a-z0-9-]/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"");
+    setSlug(c); setSlugErr(c.length>0&&c.length<3?"Min 3 chars":""); return c;
   };
 
   const handleProfileImg = (f: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => setConfig(c => ({ ...c, profileImage: e.target?.result as string }));
-    reader.readAsDataURL(f);
+    const r = new FileReader();
+    r.onload = (e) => setConfig(c=>({...c, profileImage: e.target?.result as string}));
+    r.readAsDataURL(f);
   };
 
   const handleCVExtract = async (file: File) => {
     setIsExtracting(true); setExtractErr("");
     try {
       const fd = new FormData(); fd.append("cv", file);
-      const res  = await fetch("/api/process-cv", { method: "POST", body: fd });
+      const res = await fetch("/api/process-cv",{ method:"POST", body:fd });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed");
+      if (!res.ok) throw new Error(json.error||"Failed");
       const d = json.data;
-      setCv(prev => ({ ...prev, name: d.name || "", summary: d.summary || "", skills: d.skills || [], experience: d.experience || [] }));
-    } catch (e) { setExtractErr(e instanceof Error ? e.message : "Extraction failed"); }
+      setCv(p=>({...p, name:d.name||"", summary:d.summary||"", skills:d.skills||[], experience:d.experience||[]}));
+    } catch(e) { setExtractErr(e instanceof Error?e.message:"Extraction failed"); }
     finally { setIsExtracting(false); }
   };
 
   const handlePublish = async () => {
-    if (!slug) { setSlugErr("Required"); return; }
-    if (slugErr) return;
-    if (publishStatus === "success") return;
+    if (!slug){setSlugErr("Required");return;} if(slugErr)return; if(publishStatus==="success")return;
     setIsPublishing(true); setPublishMsg(""); setPublishStatus("idle");
     try {
-      const saveRes  = await fetch("/api/save-portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ portfolio: cv, slug, templateId: config.templateId, accent: config.accent, profileImage: config.profileImage }) });
-      const saveData = await saveRes.json();
-      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save portfolio");
-      const checkoutRes  = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug }) });
-      const checkoutData = await checkoutRes.json();
-      if (checkoutRes.status === 409) { setPublishStatus("success"); setPublishMsg("✅ Already published!"); return; }
-      if (!checkoutRes.ok) throw new Error(checkoutData.error || "Failed to start checkout");
-      window.location.href = checkoutData.url;
-    } catch (e) {
-      setPublishStatus("error");
-      setPublishMsg(e instanceof Error ? e.message : "Unexpected error");
-    } finally { setIsPublishing(false); }
+      const sr = await fetch("/api/save-portfolio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({portfolio:cv,slug,templateId:config.templateId,accent:config.accent,profileImage:config.profileImage})});
+      const sd = await sr.json(); if(!sr.ok) throw new Error(sd.error||"Failed to save");
+      const cr = await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug})});
+      const cd = await cr.json();
+      if(cr.status===409){setPublishStatus("success");setPublishMsg("✅ Already published!");return;}
+      if(!cr.ok) throw new Error(cd.error||"Failed to start checkout");
+      window.location.href = cd.url;
+    } catch(e){setPublishStatus("error");setPublishMsg(e instanceof Error?e.message:"Unexpected error");}
+    finally{setIsPublishing(false);}
   };
 
-  const setExp    = useCallback((i: number, field: keyof ExpItem, val: string) =>
-    setCv(p => ({ ...p, experience: p.experience.map((e, j) => j === i ? { ...e, [field]: val } : e) })), []);
-  const removeExp = (i: number) => setCv(p => ({ ...p, experience: p.experience.filter((_, j) => j !== i) }));
-  const addExp    = () => setCv(p => ({ ...p, experience: [...p.experience, { title: "", company: "" }] }));
+  const setExp    = useCallback((i:number,field:keyof ExpItem,val:string)=>setCv(p=>({...p,experience:p.experience.map((e,j)=>j===i?{...e,[field]:val}:e)})),[]);
+  const removeExp = (i:number)=>setCv(p=>({...p,experience:p.experience.filter((_,j)=>j!==i)}));
+  const addExp    = ()=>setCv(p=>({...p,experience:[...p.experience,{title:"",company:""}]}));
+  const fProps    = (id:string)=>({ id, focused:focusedField===id, onFocus:()=>setFocusedField(id), onBlur:()=>setFocusedField(null) });
+  const tLabel    = TEMPLATES.find(t=>t.id===config.templateId)?.label ?? "Cinematic";
 
   return (
-    <div className="flex flex-col text-white overflow-hidden" style={{ height: "100vh", backgroundColor: BG_APP, fontFamily: "'JetBrains Mono', monospace" }}>
+    <div className="relative flex flex-col overflow-hidden" style={{height:"100vh",background:"#030308",fontFamily:"'JetBrains Mono',monospace"}}>
 
-      {/* ── Top Publish Bar ───────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 z-10"
-        style={{ backgroundColor: BG_APP, borderBottom: `1px solid ${BORDER}` }}>
+      {/* ── Deep space stage glow ── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{background:"radial-gradient(ellipse 80% 40% at 50% 100%,rgba(34,211,238,0.12) 0%,rgba(139,92,246,0.10) 40%,transparent 70%)"}} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{background:"radial-gradient(ellipse 60% 25% at 50% 102%,rgba(34,211,238,0.18) 0%,transparent 60%)"}} />
+
+      {/* ── Top command bar ── */}
+      <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 z-20 border-b" style={{borderColor:"rgba(255,255,255,0.05)",background:"rgba(3,3,8,0.85)",backdropFilter:"blur(20px)"}}>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="transition-colors" style={{ color: TEXT_MUT }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#E4E4E7"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = TEXT_MUT}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+          <Link href="/dashboard" style={{color:"#52526a"}} className="hover:text-white transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
           </Link>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-xs" style={{ color: TEXT_MUT }}>portfolioai.app/p/</span>
-            <input value={slug} onChange={e => validateSlug(e.target.value)} placeholder="your-slug"
-              className="bg-transparent font-mono text-sm focus:outline-none pb-0.5 w-32 transition-colors placeholder-zinc-700"
-              style={{ color: "#E4E4E7", borderBottom: `1px solid ${BORDER_LT}` }} />
-            {slugErr && <span className="text-red-400 text-xs">{slugErr}</span>}
-            {slug && !slugErr && (
-              <a href={`/p/${slug}`} target="_blank" rel="noreferrer"
-                className="text-xs transition-colors" style={{ color: TEXT_MUT }}>↗</a>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded" style={{background:"linear-gradient(135deg,#22d3ee,#8b5cf6)"}} />
+            <span className="text-white font-bold text-sm tracking-wide">KONEKTUS AI</span>
+            <span className="text-xs" style={{color:"#52526a"}}>Portfolio Builder</span>
           </div>
         </div>
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full" style={{background:"rgba(139,92,246,0.1)",border:"1px solid rgba(139,92,246,0.25)"}}>
+          <div className="w-3 h-3 rounded" style={{background:"linear-gradient(135deg,#22d3ee,#8b5cf6)"}} />
+          <span className="text-xs font-bold uppercase tracking-widest" style={{background:"linear-gradient(90deg,#22d3ee,#8b5cf6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>AI Command Center</span>
+        </div>
         <div className="flex items-center gap-3">
-          {publishMsg && (
-            <span className={`text-xs font-semibold ${publishStatus === "success" ? "text-emerald-400" : "text-red-400"}`}>
-              {publishMsg}
-            </span>
-          )}
-          {publishStatus === "success" ? (
-            <a href={`/p/${slug}`} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all"
-              style={{ backgroundColor: "#059669", boxShadow: "0 0 0 1px #065F46" }}>
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse inline-block" />
-              View Live Site ↗
-            </a>
+          {publishMsg && <span className={`text-xs font-semibold ${publishStatus==="success"?"text-emerald-400":"text-red-400"}`}>{publishMsg}</span>}
+          <div className="flex items-center gap-1.5 text-xs" style={{color:"#52526a"}}>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+            Auto-saved
+          </div>
+          <button className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)"}}>Preview</button>
+          {publishStatus==="success" ? (
+            <a href={`/p/${slug}`} target="_blank" rel="noreferrer" className="px-4 py-1.5 rounded-lg text-sm font-bold text-white" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>View Live ↗</a>
           ) : (
-            <button id="publish-btn" onClick={handlePublish} disabled={isPublishing}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: "#4F46E5", boxShadow: "0 0 0 1px #3730A3" }}>
-              {isPublishing ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  Preparing…
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  Publish — $19
-                </>
-              )}
+            <button id="publish-btn" onClick={handlePublish} disabled={isPublishing} className="px-4 py-1.5 rounded-lg text-sm font-bold text-white disabled:opacity-40" style={{background:"linear-gradient(135deg,#22d3ee,#8b5cf6)",boxShadow:"0 0 20px rgba(34,211,238,0.3)"}}>
+              {isPublishing ? "Preparing…" : "Export — $19"}
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: BG_APP }}>
-        {/* ── Left Settings Panel ───────────────────────────────────────────── */}
-        <aside className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 340, backgroundColor: "#09090B", borderRight: "1px solid #1e1e2a" }}>
+      {/* ── Main stage: 3-column spatial layout ── */}
+      <div className="flex flex-1 overflow-hidden relative z-10 gap-4 p-4 pb-28">
 
-          {/* Tab switcher — framer-motion layoutId sliding pill */}
-          <div className="flex flex-shrink-0 relative" style={{ borderBottom: `1px solid ${BORDER}`, padding: "6px 8px", gap: 4 }}>
-            {(["content", "design"] as SidebarTab[]).map(t => (
-              <button key={t} onClick={() => setActiveTab(t)} style={{ flex: 1, position: "relative", padding: "6px 0", background: "none", border: "none", cursor: "pointer", zIndex: 1 }}>
-                {activeTab === t && (
-                  <motion.span layoutId="tab-pill" transition={{ type: "spring", stiffness: 400, damping: 34 }}
-                    style={{ position: "absolute", inset: 0, background: "#1e1e28", border: `1px solid ${BORDER_LT}`, borderRadius: 6 }} />
-                )}
-                <span style={{ position: "relative", zIndex: 1, fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", fontFamily: "'JetBrains Mono', monospace", color: activeTab === t ? "#e0e0f0" : TEXT_SUB, textTransform: "uppercase" }}>
-                  {t}
-                </span>
-              </button>
-            ))}
-          </div>
+        {/* LEFT PANEL — AI Dropzone */}
+        <motion.div initial={{x:-60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:220}}>
+          <GlassPanel glow="cyan" style={{height:"100%",display:"flex",flexDirection:"column"}}>
+            {/* Sidebar icon nav */}
+            <div className="flex flex-col items-center gap-1 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+              {[
+                {icon:"✦",label:"AI Upload",active:true},
+                {icon:"👤",label:"Profile",active:false},
+                {icon:"ℹ",label:"About",active:false},
+                {icon:"⚡",label:"Skills",active:false},
+                {icon:"💼",label:"Experience",active:false},
+                {icon:"🗂",label:"Projects",active:false},
+                {icon:"🎨",label:"Design",active:false},
+                {icon:"⚙",label:"Settings",active:false},
+              ].map(item=>(
+                <button key={item.label} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
+                  <span style={{fontSize:16}}>{item.icon}</span>
+                  <span style={{fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase"}}>{item.label}</span>
+                </button>
+              ))}
+            </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            {/* Dropzone */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4 gap-4">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[9px] uppercase tracking-widest font-bold" style={{color:"#52526a"}}>AI Dropzone</span>
+                <button style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:14}}>×</button>
+              </div>
 
-            {/* ── CONTENT TAB ─────────────────────────────────────────────── */}
-            {activeTab === "content" && <>
-              {/* AI Dropzone — premium glowing dashed border */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                <SectionLabel>AI Extraction</SectionLabel>
-                <motion.div
-                  onClick={() => !isExtracting && fileRef.current?.click()}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  style={{
-                    position: "relative", borderRadius: 8, padding: "20px 16px",
-                    background: "linear-gradient(135deg, #0a0a14 0%, #080810 100%)",
-                    border: `1.5px dashed ${isExtracting ? "#3a3a52" : "#22d3ee50"}`,
-                    boxShadow: isExtracting ? "none" : "0 0 0 1px #22d3ee10, inset 0 0 30px rgba(34,211,238,0.03)",
-                    cursor: isExtracting ? "not-allowed" : "pointer",
-                    textAlign: "center",
-                    transition: "all 0.3s ease",
-                    animation: isExtracting ? "none" : "dropzonePulse 3s ease-in-out infinite",
-                  }}
-                >
-                  {/* Animated corner accents */}
-                  {["top-0 left-0","top-0 right-0","bottom-0 left-0","bottom-0 right-0"].map((pos,i) => (
-                    <span key={i} style={{ position:"absolute", [pos.includes("top") ? "top" : "bottom"]: -1, [pos.includes("left") ? "left" : "right"]: -1, width:10, height:10, borderColor:`${CYAN_GLOW}80`, borderStyle:"solid", borderWidth: pos.includes("top") ? "1.5px 0 0 1.5px" : pos.includes("right") && pos.includes("top") ? "1.5px 1.5px 0 0" : pos.includes("left") ? "0 0 1.5px 1.5px" : "0 1.5px 1.5px 0" }} />
-                  ))}
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>{isExtracting ? "⟳" : "⬆"}</div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: isExtracting ? TEXT_SUB : "#e0f7fa", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>
-                    {isExtracting ? "Extracting with AI…" : "Drop PDF CV here"}
-                  </p>
-                  <p style={{ fontSize: 9, color: TEXT_MUT, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.08em" }}>
-                    {isExtracting ? "Parsing your experience & skills" : "or click to browse · AI auto-fills everything"}
-                  </p>
-                  <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleCVExtract(e.target.files[0])} />
-                  {extractErr && <p style={{ fontSize: 10, color: "#f87171", marginTop: 8, fontFamily: "'JetBrains Mono',monospace" }}>{extractErr}</p>}
-                </motion.div>
-                <style>{`
-                  @keyframes dropzonePulse {
-                    0%,100% { box-shadow: 0 0 0 1px #22d3ee08, inset 0 0 20px rgba(34,211,238,0.02); border-color: #22d3ee40; }
-                    50%      { box-shadow: 0 0 0 3px #22d3ee15, inset 0 0 40px rgba(34,211,238,0.06); border-color: #22d3ee90; }
-                  }
-                `}</style>
+              <motion.div onClick={()=>!isExtracting&&fileRef.current?.click()} whileHover={{scale:1.02}} whileTap={{scale:0.98}}
+                className="flex flex-col items-center gap-4 cursor-pointer">
+                <NeonRing extracting={isExtracting}/>
+                <div className="text-center">
+                  <p className="text-sm font-bold mb-1" style={{color:"#e0e8ff"}}>{isExtracting?"Extracting…":"Drop your CV here"}</p>
+                  <p className="text-[10px]" style={{color:"#52526a"}}>Let AI transform your story{"\n"}into a stunning portfolio</p>
+                  <p className="text-[9px] mt-1" style={{color:"#3a3a52"}}>or</p>
+                </div>
+                <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white w-full justify-center" style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Choose File
+                </button>
               </motion.div>
+              <input ref={fileRef} type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={e=>e.target.files?.[0]&&handleCVExtract(e.target.files[0])}/>
+              {extractErr&&<p className="text-[10px] text-red-400 text-center">{extractErr}</p>}
+              <div className="flex items-center gap-1.5 mt-auto">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"/>
+                <span className="text-[9px]" style={{color:"#52526a"}}>Supports PDF · DOCX · TXT</span>
+              </div>
+            </div>
+          </GlassPanel>
+        </motion.div>
 
-              {/* Profile Pic */}
-              <div>
-                <SectionLabel>Profile Picture</SectionLabel>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
-                    style={{ border: `1px solid ${BORDER_LT}`, backgroundColor: BG_INPUT }}
-                    onClick={() => imgRef.current?.click()}>
-                    {config.profileImage
-                      ? <img src={config.profileImage} className="w-full h-full object-cover" alt="Profile" />
-                      : <div className="w-full h-full flex items-center justify-center text-lg opacity-30">📷</div>}
-                  </div>
-                  <button onClick={() => imgRef.current?.click()} className="text-xs font-semibold transition-opacity hover:opacity-80" style={{ color: hex }}>
-                    Change Photo
-                  </button>
-                  <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleProfileImg(e.target.files[0])} />
+        {/* CENTER PANEL — Live Preview */}
+        <motion.div initial={{y:40,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:0.8,delay:0.15,ease:[0.22,1,0.36,1]}} className="flex-1 flex flex-col min-w-0">
+          <GlassPanel glow="purple" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 0 60px rgba(139,92,246,0.12),0 40px 120px rgba(0,0,0,0.9),0 0 1px rgba(139,92,246,0.3)"}}>
+            <MacWindowChrome slug={slug}/>
+            <div style={{flex:1,overflowY:"auto",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px 24px 32px",background:"rgba(0,0,0,0.2)"}}>
+              <motion.div initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{duration:0.6,ease:[0.22,1,0.36,1]}}
+                style={{width:"100%",maxWidth:1024,minHeight:700,borderRadius:8,overflow:"hidden",
+                  border:"1px solid rgba(255,255,255,0.06)",
+                  boxShadow:"0 32px 100px -10px rgba(0,0,0,0.95),0 8px 32px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.04)"}}>
+                <LivePreviewCanvas cv={cv} config={config} slug={slug}/>
+              </motion.div>
+            </div>
+          </GlassPanel>
+        </motion.div>
+
+        {/* RIGHT PANEL — Edit Profile Form */}
+        <motion.div initial={{x:60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:300}}>
+          <GlassPanel glow="purple" style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#8888a8"}}>Edit Profile</span>
+              <button style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4" style={{display:"flex",flexDirection:"column",gap:20}}>
+              {/* Profile image row */}
+              <div className="flex items-center gap-3">
+                <div onClick={()=>imgRef.current?.click()} className="w-12 h-12 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
+                  style={{border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)"}}>
+                  {config.profileImage
+                    ? <img src={config.profileImage} className="w-full h-full object-cover" alt="Profile"/>
+                    : <div className="w-full h-full flex items-center justify-center text-lg opacity-20">📷</div>}
                 </div>
+                <div>
+                  <button onClick={()=>imgRef.current?.click()} className="text-[11px] font-semibold" style={{color:"#22d3ee",background:"none",border:"none",cursor:"pointer"}}>Change Photo</button>
+                  <p className="text-[9px]" style={{color:"#52526a"}}>JPG, PNG or GIF</p>
+                </div>
+                <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e=>e.target.files?.[0]&&handleProfileImg(e.target.files[0])}/>
               </div>
 
-              {/* Personal Info — staggered reveal + underline inputs */}
-              {([{
-                key: "info", label: "Personal Info", delay: 0.05,
-                content: (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    {([{id:"name",ph:"Full name",val:cv.name,fn:(v:string)=>setCv(p=>({...p,name:v}))},{id:"role",ph:"Role · e.g. Software Engineer",val:cv.role||"" ,fn:(v:string)=>setCv(p=>({...p,role:v}))},{id:"email",ph:"Email address",val:cv.email||"",fn:(v:string)=>setCv(p=>({...p,email:v}))}] as {id:string;ph:string;val:string;fn:(v:string)=>void}[]).map(f=>(
-                      <div key={f.id}>
-                        <label style={{ fontSize:9, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", color: focusedField===f.id ? CYAN_GLOW : TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", display:"block", marginBottom:3, transition:"color 0.2s" }}>{f.ph}</label>
-                        <input value={f.val} onChange={e=>f.fn(e.target.value)} placeholder="" {...mkInp(f.id)} />
-                      </div>
-                    ))}
-                    <div>
-                      <label style={{ fontSize:9, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", color: focusedField==="summary" ? CYAN_GLOW : TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", display:"block", marginBottom:3, transition:"color 0.2s" }}>Professional Summary</label>
-                      <textarea value={cv.summary} onChange={e=>setCv(p=>({...p,summary:e.target.value}))} rows={4} placeholder="" {...mkInp("summary")} />
+              <GlowInput label="Full Name" value={cv.name} onChange={v=>setCv(p=>({...p,name:v}))} {...fProps("name")}/>
+              <GlowInput label="Title" value={cv.role||""} onChange={v=>setCv(p=>({...p,role:v}))} {...fProps("role")}/>
+              <GlowInput label="Location" value={(cv as any).location||""} onChange={v=>setCv(p=>({...p,location:v} as any))} {...fProps("location")}/>
+              <GlowInput label="Email" value={cv.email||""} onChange={v=>setCv(p=>({...p,email:v}))} {...fProps("email")}/>
+              <GlowInput label="Bio" value={cv.summary} onChange={v=>setCv(p=>({...p,summary:v}))} multiline rows={4} {...fProps("summary")}/>
+
+              {/* Char count */}
+              <div className="flex justify-end">
+                <span className="text-[9px]" style={{color:"#52526a"}}>{cv.summary.length} / 160</span>
+              </div>
+
+              {/* Skills */}
+              <div>
+                <label className="block mb-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#6666aa"}}>Skills</label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {cv.skills.map((s,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 10px",borderRadius:6,background:"rgba(34,211,238,0.06)",border:"1px solid rgba(34,211,238,0.15)"}}>
+                      <span style={{fontSize:11,color:"#c0c0e0"}}>{s}</span>
+                      <button onClick={()=>setCv(p=>({...p,skills:p.skills.filter((_,j)=>j!==i)}))} style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:14,lineHeight:1,padding:0}}>×</button>
                     </div>
-                  </div>
-                )
-              },{
-                key: "skills", label: "Skills", delay: 0.12,
-                content: (
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                    {cv.skills.map((s,i)=>(
-                      <div key={i} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 10px", border:`1px solid ${BORDER_LT}`, borderRadius:4, background:"#0e0e14" }}>
-                        <span style={{ fontSize:11, color:"#c8c8e8", fontFamily:"'JetBrains Mono',monospace" }}>{s}</span>
-                        <button onClick={()=>setCv(p=>({...p,skills:p.skills.filter((_,j)=>j!==i)}))} style={{ color:TEXT_MUT, background:"none", border:"none", cursor:"pointer", fontSize:14, lineHeight:1, padding:0 }}>×</button>
-                      </div>
-                    ))}
-                    <button onClick={()=>{const s=prompt("Add skill");if(s)setCv(p=>({...p,skills:[...p.skills,s]}));}} style={{ fontSize:10, padding:"3px 10px", border:`1px dashed ${BORDER_LT}`, borderRadius:4, color:TEXT_SUB, background:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace" }}>+ Add</button>
-                  </div>
-                )
-              },{
-                key: "exp", label: "Experience", delay: 0.19,
-                content: (
-                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                    {cv.experience.map((e,i)=>(
-                      <div key={i} style={{ padding:"10px 12px", border:`1px solid ${BORDER_LT}`, borderRadius:6, background:BG_CARD, display:"flex", flexDirection:"column", gap:8 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between" }}>
-                          <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", color:TEXT_MUT, fontFamily:"'JetBrains Mono',monospace" }}>Role {i+1}</span>
-                          <button onClick={()=>removeExp(i)} style={{ fontSize:9, color:"#f87171", background:"none", border:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace" }}>Remove</button>
-                        </div>
-                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                          <input value={e.title} onChange={ev=>setExp(i,"title",ev.target.value)} placeholder="" {...mkInp(`t${i}`)} />
-                          <input value={e.company} onChange={ev=>setExp(i,"company",ev.target.value)} placeholder="" {...mkInp(`c${i}`)} />
-                        </div>
-                        <input value={e.duration||""} onChange={ev=>setExp(i,"duration",ev.target.value)} placeholder="" {...mkInp(`d${i}`)} />
-                        <textarea value={e.description||""} onChange={ev=>setExp(i,"description",ev.target.value)} rows={2} placeholder="" {...mkInp(`desc${i}`)} />
-                      </div>
-                    ))}
-                    <button onClick={addExp} style={{ fontSize:10, padding:"6px 0", border:`1px dashed ${BORDER_LT}`, borderRadius:6, color:TEXT_SUB, background:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", letterSpacing:"0.1em" }}>+ Add Role</button>
-                  </div>
-                )
-              }] as {key:string;label:string;delay:number;content:React.ReactNode}[]).map(section=>(
-                <motion.div key={section.key} initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4, delay:section.delay, ease:[0.22,1,0.36,1] }}>
-                  <p style={{ fontSize:9, fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", color:TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ display:"inline-block", width:16, height:1, background:BORDER_LT }} />
-                    {section.label}
-                  </p>
-                  {section.content}
-                </motion.div>
-              ))}
-            </>}
-
-            {/* ── DESIGN TAB ──────────────────────────────────────────────── */}
-            {activeTab === "design" && <>
-              <div>
-                <SectionLabel>Portfolio Template ({TEMPLATES.length} available)</SectionLabel>
-                <div className="grid grid-cols-2 gap-2">
-                  {TEMPLATES.map(t => {
-                    const active = config.templateId === t.id;
-                    return (
-                      <button key={t.id} onClick={() => setConfig(c => ({ ...c, templateId: t.id }))}
-                        className="p-3 rounded-lg text-left transition-all flex flex-col relative"
-                        style={{
-                          backgroundColor: active ? `${hex}18` : BG_APP,
-                          border: `1px solid ${active ? hex : BORDER_LT}`,
-                          boxShadow: active ? `0 0 0 1px ${hex}30` : "none",
-                        }}>
-                        {t.badge && (
-                          <span className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider text-white"
-                            style={{ backgroundColor: hex }}>{t.badge}</span>
-                        )}
-                        <span className="text-xl mb-1.5 leading-none">{t.emoji}</span>
-                        <p className="text-xs font-semibold text-white mb-0.5 leading-tight">{t.label}</p>
-                        <p className="text-[10px] leading-snug flex-1" style={{ color: TEXT_MUT }}>{t.desc}</p>
-                        {active && (
-                          <div className="mt-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white" style={{ backgroundColor: hex }}>✓</div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <SectionLabel>Accent Color</SectionLabel>
-                <div className="flex flex-wrap gap-3">
-                  {ACCENTS.map(a => (
-                    <button key={a.id} onClick={() => setConfig(c => ({ ...c, accent: a.id }))} title={a.id}
-                      className="w-9 h-9 rounded-full transition-all"
-                      style={{
-                        backgroundColor: a.hex,
-                        boxShadow: config.accent === a.id ? `0 0 0 2px ${BG_PANEL}, 0 0 0 4px ${a.hex}` : "none",
-                        transform: config.accent === a.id ? "scale(1.15)" : "scale(1)",
-                      }} />
                   ))}
+                  <button onClick={()=>{const s=prompt("Add skill");if(s)setCv(p=>({...p,skills:[...p.skills,s]}))} } style={{fontSize:11,padding:"3px 10px",borderRadius:6,color:"#22d3ee",background:"rgba(34,211,238,0.05)",border:"1px dashed rgba(34,211,238,0.2)",cursor:"pointer"}}>+ Add Skill</button>
                 </div>
               </div>
-            </>}
-          </div>
-        </aside>
 
-        {/* ── Right Preview Canvas — premium anodized chrome ────────────────── */}
-        <main className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: BG_APP }}>
-          {/* Hardware-grade window chrome */}
-          <div style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 20px", backgroundColor: BG_APP, borderBottom:`1px solid ${BORDER}` }}>
-            <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-              {[["#ff5f57","#ff8c00"],["#febc2e","#e6a800"],["#28c840","#1da035"]].map(([bg,shadow],idx)=>(
-                <span key={idx} style={{ width:11, height:11, borderRadius:"50%", background:bg, boxShadow:`0 0 0 0.5px ${shadow}40`, display:"block" }} />
-              ))}
-              <div style={{ marginLeft:12, display:"flex", alignItems:"center", gap:6, background:"#0d0d14", border:`1px solid ${BORDER_LT}`, borderRadius:5, padding:"3px 10px" }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={TEXT_MUT} strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:TEXT_MUT, letterSpacing:"0.04em" }}>
-                  {slug ? `portfolioai.app/p/${slug}` : "portfolioai.app/p/your-slug"}
-                </span>
+              {/* Slug + publish */}
+              <div>
+                <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#6666aa"}}>Portfolio URL</label>
+                <div style={{display:"flex",alignItems:"center",gap:0,borderBottom:"1.5px solid rgba(139,92,246,0.3)"}}>
+                  <span style={{fontSize:10,color:"#52526a",whiteSpace:"nowrap"}}>portfolioai.app/p/</span>
+                  <input value={slug} onChange={e=>validateSlug(e.target.value)} placeholder="your-slug" style={{flex:1,background:"transparent",border:"none",outline:"none",color:"#e0e0ff",fontSize:13,padding:"6px 4px",fontFamily:"'JetBrains Mono',monospace"}}/>
+                </div>
+                {slugErr&&<p className="text-red-400 text-[10px] mt-1">{slugErr}</p>}
+              </div>
+
+              {/* Template picker */}
+              <div>
+                <label className="block mb-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#6666aa"}}>Template</label>
+                <select value={config.templateId} onChange={e=>setConfig(c=>({...c,templateId:e.target.value as TemplateId}))}
+                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:"#e0e0ff",fontSize:12,padding:"8px 10px",fontFamily:"'JetBrains Mono',monospace",cursor:"pointer",outline:"none"}}>
+                  {TEMPLATES.map(t=><option key={t.id} value={t.id} style={{background:"#0d0d1e"}}>{t.label}</option>)}
+                </select>
+              </div>
+
+              {/* Pro tip */}
+              <div className="rounded-xl p-3 mt-2" style={{background:"rgba(234,179,8,0.06)",border:"1px solid rgba(234,179,8,0.15)"}}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{fontSize:12}}>💡</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{color:"#eab308"}}>Pro Tip</span>
+                </div>
+                <p className="text-[10px]" style={{color:"#888880"}}>Add more projects to showcase your best work.</p>
+                <div className="mt-2 rounded-full h-1" style={{background:"rgba(255,255,255,0.06)"}}>
+                  <div className="h-1 rounded-full" style={{width:"50%",background:"linear-gradient(90deg,#22d3ee,#8b5cf6)"}}/>
+                </div>
+                <div className="flex justify-end mt-1"><span className="text-[9px]" style={{color:"#52526a"}}>3 / 6</span></div>
               </div>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, letterSpacing:"0.15em", textTransform:"uppercase", color:TEXT_MUT }}>Live Preview</span>
-              <span style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e", display:"block", animation:"pulse 2s infinite" }} />
-            </div>
-          </div>
-
-          {/* Canvas */}
-          <div style={{ flex:1, display:"flex", alignItems:"flex-start", justifyContent:"center", padding:32, overflowY:"auto", backgroundColor: BG_APP }}>
-            <motion.div initial={{ opacity:0, y:20, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} transition={{ duration:0.6, ease:[0.22,1,0.36,1] }}
-              style={{ width:"100%", maxWidth:1024, borderRadius:0, overflow:"hidden", position:"relative", minHeight:800,
-                border:`1px solid #252535`,
-                boxShadow:"0 0 0 1px #1a1a28, 0 32px 100px -10px rgba(0,0,0,0.95), 0 8px 32px -4px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)"
-              }}>
-              <LivePreviewCanvas cv={cv} config={config} slug={slug} />
-            </motion.div>
-          </div>
-        </main>
+          </GlassPanel>
+        </motion.div>
       </div>
+
+      {/* ── Bottom floating dock ── */}
+      <BottomDock onGenerate={()=>fileRef.current?.click()} isExtracting={isExtracting} templateLabel={tLabel} accentName={config.accent}/>
+
+      <style>{`
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.4); }
+      `}</style>
     </div>
   );
 }
