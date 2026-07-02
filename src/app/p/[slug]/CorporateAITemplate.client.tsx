@@ -17,6 +17,7 @@ interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
   summary?: string; skills?: string[]; experience?: ExpItem[]
   profile_image?: string | null
+  cv_url?: string | null
 }
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ export default function CorporateAITemplateClient({ p, isPreview }: { p: Portfol
       </div>
 
       {/* 2. Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
 
       <header className={`corporate-header ${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 z-50 shadow-md`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">

@@ -4,11 +4,12 @@ import { supabaseAdmin } from '@/lib/supabase';
 interface ExperienceItem { title: string; company: string; duration?: string; description?: string; }
 interface PortfolioPayload {
   slug: string;
-  portfolio: { summary?: string; skills?: string[]; experience?: ExperienceItem[]; name?: string; };
+  portfolio: { summary?: string; skills?: string[]; experience?: ExperienceItem[]; name?: string; cv_url?: string; };
   theme?: string;
   accent?: string;
   templateId?: string;
   profileImage?: string; // base64 data URL or empty string
+  userId?: string;
 }
 
 const THEME_BG: Record<string, string> = { minimal: '#ffffff', dark: '#0f172a', creative: '#fdf4ff', split: '#f8fafc' };
@@ -16,12 +17,12 @@ const THEME_BG: Record<string, string> = { minimal: '#ffffff', dark: '#0f172a', 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as PortfolioPayload;
-    const { slug, portfolio, theme = 'minimal', accent = 'indigo', templateId = 'minimal', profileImage = '' } = body;
+    const { slug, portfolio, theme = 'minimal', accent = 'indigo', templateId = 'minimal', profileImage = '', userId } = body;
 
     if (!slug || slug.trim().length < 3)
       return NextResponse.json({ error: 'Slug must be at least 3 characters.' }, { status: 400 });
 
-    const { summary = '', skills = [], experience = [] } = portfolio ?? {};
+    const { summary = '', skills = [], experience = [], cv_url = null } = portfolio ?? {};
     const backgroundColor = THEME_BG[theme] ?? '#ffffff';
 
     const layout = {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     const { data, error } = await supabaseAdmin
       .from('portfolios')
       .upsert(
-        [{ slug, summary, skills, experience, layout, profile_image: profileImage || null, template_id: templateId }],
+        [{ slug, summary, skills, experience, layout, profile_image: profileImage || null, template_id: templateId, cv_url, ...(userId ? { user_id: userId } : {}) }],
         { onConflict: 'slug' }
       )
       .select();

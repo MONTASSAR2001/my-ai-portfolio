@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, User, Briefcase, FolderGit2, Download } from "lucide-react"
 
-export default function CommandPalette() {
+export default function CommandPalette({ cvUrl }: { cvUrl?: string }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
 
@@ -31,14 +31,17 @@ export default function CommandPalette() {
 
   const filteredActions = actions.filter(a => a.label.toLowerCase().includes(search.toLowerCase()))
 
-  const handleAction = (href: string) => {
+  const handleAction = (href: string, id: string) => {
     setIsOpen(false)
     setSearch("")
-    if (href !== "#") {
-      window.location.hash = href
+    if (id === "resume") {
+      if (cvUrl) {
+        window.open(cvUrl, '_blank')
+      } else {
+        alert("No CV URL available.")
+      }
     } else {
-      // Placeholder for CV download logic
-      alert("CV Download initiated.")
+      window.location.hash = href
     }
   }
 
@@ -88,7 +91,7 @@ export default function CommandPalette() {
                     {filteredActions.map((action) => (
                       <button
                         key={action.id}
-                        onClick={() => handleAction(action.href)}
+                        onClick={() => handleAction(action.href, action.id)}
                         className="w-full flex items-center justify-between px-3 py-3 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 text-left transition-colors group"
                       >
                         <div className="flex items-center gap-3">

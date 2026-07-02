@@ -12,10 +12,11 @@ import CorporateAITemplateClient      from "@/app/p/[slug]/CorporateAITemplate.c
 import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTemplate.client";
 import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
 import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
+import { supabaseBrowser } from "@/lib/supabase";
 import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel, ProjectsPanel, InterviewDefender } from "./SpatialPanels";
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
-interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; }
+interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; cv_url?: string; }
 type TemplateId = "cinematic"|"futuristic"|"premium"|"chic-tech"|"corporate-ai"|"elegant"|"professional"|"robotics";
 interface SiteConfig { templateId: TemplateId; accent: string; profileImage: string; }
 
@@ -101,6 +102,7 @@ export default function PortfolioBuilderPage() {
   const [focusedField, setFocusedField] = useState<string|null>(null);
   const [themeColor, setThemeColor] = useState<string|null>(null);
   const [activeTab, setActiveTab] = useState<"profile"|"analytics"|"projects">("profile");
+  const [isEditMode, setIsEditMode] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
 
@@ -167,6 +169,47 @@ export default function PortfolioBuilderPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const fetchExisting = async () => {
+      try {
+        const { data: sessionData } = await supabaseBrowser.auth.getSession();
+        if (!sessionData?.session?.user) return;
+        
+        const { data, error } = await supabaseBrowser
+          .from('portfolios')
+          .select('*')
+          .eq('user_id', sessionData.session.user.id)
+          .single();
+          
+        if (data) {
+          setIsEditMode(true);
+          setSlug(data.slug);
+          setCv(p => ({
+            ...p,
+            name: data.name || "",
+            summary: data.summary || "",
+            skills: data.skills || [],
+            experience: data.experience || [],
+            cv_url: data.cv_url
+          }));
+          setConfig(c => ({
+            ...c,
+            templateId: (data.template_id as TemplateId) || "cinematic",
+            accent: data.layout?.root?.props?.accent || "indigo",
+            profileImage: data.profile_image || ""
+          }));
+          if (data.is_published) {
+            setPublishStatus("success");
+            setPublishMsg("🎉 Portfolio is live!");
+          }
+        }
+      } catch (err) {
+        console.error("Fetch existing portfolio err:", err);
+      }
+    };
+    fetchExisting();
+  }, []);
+
   const validateSlug = (v: string) => {
     const c = v.toLowerCase().replace(/[^a-z0-9-]/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"");
     setSlug(c); setSlugErr(c.length>0&&c.length<3?"Min 3 chars":""); return c;
@@ -181,22 +224,48 @@ export default function PortfolioBuilderPage() {
   const handleCVExtract = async (file: File) => {
     setIsExtracting(true); setExtractErr("");
     try {
+      // 1. Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabaseBrowser
+        .storage
+        .from('cv-files')
+        .upload(fileName, file);
+
+      let cv_url = "";
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+      } else {
+        const { data: urlData } = supabaseBrowser.storage.from('cv-files').getPublicUrl(fileName);
+        cv_url = urlData.publicUrl;
+      }
+
+      // 2. Process CV data
       const fd = new FormData(); fd.append("cv", file);
       const res = await fetch("/api/process-cv",{ method:"POST", body:fd });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error||"Failed");
       const d = json.data;
-      setCv(p=>({...p, name:d.name||"", summary:d.summary||"", skills:d.skills||[], experience:d.experience||[]}));
+      setCv(p=>({...p, name:d.name||"", summary:d.summary||"", skills:d.skills||[], experience:d.experience||[], cv_url: cv_url || p.cv_url}));
     } catch(e) { setExtractErr(e instanceof Error?e.message:"Extraction failed"); }
     finally { setIsExtracting(false); }
   };
 
   const handlePublish = async () => {
-    if (!slug){setSlugErr("Required");return;} if(slugErr)return; if(publishStatus==="success")return;
+    if (!slug){setSlugErr("Required");return;} if(slugErr)return;
     setIsPublishing(true); setPublishMsg(""); setPublishStatus("idle");
     try {
-      const sr = await fetch("/api/save-portfolio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({portfolio:cv,slug,templateId:config.templateId,accent:config.accent,profileImage:config.profileImage})});
+      const { data: sessionData } = await supabaseBrowser.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      const sr = await fetch("/api/save-portfolio",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({portfolio:cv,slug,templateId:config.templateId,accent:config.accent,profileImage:config.profileImage, userId})});
       const sd = await sr.json(); if(!sr.ok) throw new Error(sd.error||"Failed to save");
+      
+      if (isEditMode) {
+        setPublishStatus("success");
+        setPublishMsg("✅ Portfolio Updated!");
+        return;
+      }
+
       const cr = await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug})});
       const cd = await cr.json();
       if(cr.status===409){setPublishStatus("success");setPublishMsg("✅ Already published!");return;}
@@ -242,13 +311,12 @@ export default function PortfolioBuilderPage() {
             Auto-saved
           </div>
           <button className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)"}}>Preview</button>
-          {publishStatus==="success" ? (
+          {publishStatus==="success" && (
             <a href={`/p/${slug}`} target="_blank" rel="noreferrer" className="px-4 py-1.5 rounded-lg text-sm font-bold text-white" style={{background:"linear-gradient(135deg,#059669,#047857)"}}>View Live ↗</a>
-          ) : (
-            <button id="publish-btn" onClick={handlePublish} disabled={isPublishing} className="px-4 py-1.5 rounded-lg text-sm font-bold text-white disabled:opacity-40" style={{background:"linear-gradient(135deg,#22d3ee,#8b5cf6)",boxShadow:"0 0 20px rgba(34,211,238,0.3)"}}>
-              {isPublishing ? "Preparing…" : "Export — $19"}
-            </button>
           )}
+          <button id="publish-btn" onClick={handlePublish} disabled={isPublishing} className="px-4 py-1.5 rounded-lg text-sm font-bold text-white disabled:opacity-40" style={{background:"linear-gradient(135deg,#22d3ee,#8b5cf6)",boxShadow:"0 0 20px rgba(34,211,238,0.3)"}}>
+            {isPublishing ? (isEditMode ? "Updating…" : "Preparing…") : (isEditMode ? "Update Portfolio" : "Export — $19")}
+          </button>
         </div>
       </div>
 

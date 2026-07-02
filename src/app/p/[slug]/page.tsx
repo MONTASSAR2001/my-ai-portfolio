@@ -19,6 +19,7 @@ interface PortfolioRow {
   layout?: { root?: { props?: Record<string, unknown> } } | null;
   profile_image?: string | null; template_id?: string;
   has_paid?: boolean; is_published?: boolean;
+  cv_url?: string | null;
 }
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
   summary?: string; skills?: string[]; experience?: ExpItem[]
   profile_image?: string | null
+  cv_url?: string | null
 }
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -170,7 +171,7 @@ export default function FuturisticTemplateClient({ p, isPreview }: { p: Portfoli
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
       {!isPreview && (
         <div className="dark">
-          <CommandPalette />
+          <CommandPalette cvUrl={p.cv_url} />
         </div>
       )}
 

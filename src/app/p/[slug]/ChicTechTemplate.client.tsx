@@ -17,6 +17,7 @@ interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
   summary?: string; skills?: string[]; experience?: ExpItem[]
   profile_image?: string | null
+  cv_url?: string | null
 }
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ export default function ChicTechTemplateClient({ p, isPreview }: { p: PortfolioR
       <FluidMeshBackground />
       
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
 
       <motion.header 
         initial={{ y: -100, opacity: 0 }}

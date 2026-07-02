@@ -16,6 +16,7 @@ interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
   summary?: string; skills?: string[]; experience?: ExpItem[]
   profile_image?: string | null
+  cv_url?: string | null
 }
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ export default function CinematicTemplateClient({ p, isPreview }: { p: Portfolio
       </div>
 
       {/* 2. Command Palette (Hidden in preview so it doesn't hijack CMD+K) */}
-      {!isPreview && <CommandPalette />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
 
       {/* Navigation Header */}
       <motion.header 

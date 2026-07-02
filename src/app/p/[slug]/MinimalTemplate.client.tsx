@@ -17,6 +17,7 @@ interface PortfolioRow {
   slug: string; name?: string; role?: string; email?: string
   summary?: string; skills?: string[]; experience?: ExpItem[]
   profile_image?: string | null
+  cv_url?: string | null
 }
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ export default function MinimalTemplateClient({ p, isPreview }: { p: PortfolioRo
       </div>
 
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
 
       <header className={`${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100`}>
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
