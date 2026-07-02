@@ -13,7 +13,7 @@ import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTempl
 import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
 import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
 import { supabaseBrowser } from "@/lib/supabase";
-import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel, ProjectsPanel, InterviewDefender } from "./SpatialPanels";
+import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel, ProjectsPanel, InterviewDefender, HistoryPanel } from "./SpatialPanels";
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; cv_url?: string; }
@@ -88,6 +88,40 @@ const useVoiceCommand = () => {
   return { isListening, transcript, toggleListening };
 };
 
+const saveVersion = async (userId: string, cv: CVData, config: SiteConfig, slug: string) => {
+  try {
+    const { error } = await supabaseBrowser
+      .from('portfolio_versions')
+      .insert({
+        user_id: userId,
+        slug,
+        cv_state: cv,
+        config_state: config,
+        created_at: new Date().toISOString(),
+        description: `Snapshot at ${new Date().toLocaleTimeString()}`
+      });
+    if (error) throw error;
+  } catch (err) {
+    console.error("Failed to save version:", err);
+  }
+};
+
+const fetchVersions = async (userId: string, slug: string) => {
+  try {
+    const { data, error } = await supabaseBrowser
+      .from('portfolio_versions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('slug', slug)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error("Failed to fetch versions:", err);
+    return [];
+  }
+};
+
 export default function PortfolioBuilderPage() {
   const searchParams = useSearchParams();
   const [cv, setCv] = useState<CVData>({ name:"", summary:"", skills:[], experience:[] });
@@ -102,8 +136,10 @@ export default function PortfolioBuilderPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [focusedField, setFocusedField] = useState<string|null>(null);
   const [themeColor, setThemeColor] = useState<string|null>(null);
-  const [activeTab, setActiveTab] = useState<"profile"|"analytics"|"projects">("profile");
+  const [activeTab, setActiveTab] = useState<"profile"|"analytics"|"projects"|"history">("profile");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [versions, setVersions] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string|null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
 
@@ -175,6 +211,7 @@ export default function PortfolioBuilderPage() {
       try {
         const { data: sessionData } = await supabaseBrowser.auth.getSession();
         if (!sessionData?.session?.user) return;
+        setUserId(sessionData.session.user.id);
         
         const { data, error } = await supabaseBrowser
           .from('portfolios')
@@ -203,6 +240,9 @@ export default function PortfolioBuilderPage() {
             setPublishStatus("success");
             setPublishMsg("🎉 Portfolio is live!");
           }
+          
+          const v = await fetchVersions(sessionData.session.user.id, data.slug);
+          setVersions(v);
         }
       } catch (err) {
         console.error("Fetch existing portfolio err:", err);
@@ -296,6 +336,25 @@ export default function PortfolioBuilderPage() {
     }
   };
 
+  const handleCreateSnapshot = async () => {
+    if (!userId || !slug) {
+      setPublishStatus("error"); setPublishMsg("Save portfolio first."); return;
+    }
+    setPublishStatus("idle"); setPublishMsg("Creating snapshot...");
+    await saveVersion(userId, cv, config, slug);
+    const v = await fetchVersions(userId, slug);
+    setVersions(v);
+    setPublishStatus("success"); setPublishMsg("📸 Snapshot saved!");
+    setTimeout(() => setPublishMsg(""), 3000);
+  };
+
+  const handleRestore = (v: any) => {
+    setCv(v.cv_state);
+    setConfig(v.config_state);
+    setPublishStatus("success"); setPublishMsg("✨ Restored!");
+    setTimeout(() => setPublishMsg(""), 3000);
+  };
+
   const setExp    = useCallback((i:number,field:keyof ExpItem,val:string)=>setCv(p=>({...p,experience:p.experience.map((e,j)=>j===i?{...e,[field]:val}:e)})),[]);
   const removeExp = (i:number)=>setCv(p=>({...p,experience:p.experience.filter((_,j)=>j!==i)}));
   const addExp    = ()=>setCv(p=>({...p,experience:[...p.experience,{title:"",company:""}]}));
@@ -331,6 +390,9 @@ export default function PortfolioBuilderPage() {
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
             Auto-saved
           </div>
+          <button onClick={handleCreateSnapshot} className="px-2 py-1.5 rounded-lg text-xs font-semibold" style={{color: "#22d3ee", background:"rgba(34,211,238,0.1)",border:"1px solid rgba(34,211,238,0.2)"}}>
+            Create Snapshot 📸
+          </button>
           <div className="relative group">
             <button disabled={isTranslating} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50" style={{background:"rgba(139,92,246,0.15)",border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 0 15px rgba(139,92,246,0.15)"}}>
               {isTranslating ? (
@@ -369,17 +431,18 @@ export default function PortfolioBuilderPage() {
             {/* Sidebar icon nav */}
             <div className="flex flex-col items-center gap-1 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
               {[
-                {icon:"✦",label:"AI Upload",active:activeTab==="profile"||activeTab==="analytics"||activeTab==="projects", id:"ai"},
+                {icon:"✦",label:"AI Upload",active:activeTab==="profile"||activeTab==="analytics"||activeTab==="projects"||activeTab==="history", id:"ai"},
                 {icon:"👤",label:"Profile",active:activeTab==="profile", id:"profile"},
                 {icon:"📈",label:"Analytics",active:activeTab==="analytics", id:"analytics"},
                 {icon:"🗂",label:"Projects",active:activeTab==="projects", id:"projects"},
+                {icon:"⏳",label:"History",active:activeTab==="history", id:"history"},
                 {icon:"ℹ",label:"About",active:false, id:"about"},
                 {icon:"⚡",label:"Skills",active:false, id:"skills"},
                 {icon:"💼",label:"Experience",active:false, id:"experience"},
                 {icon:"🎨",label:"Design",active:false, id:"design"},
                 {icon:"⚙",label:"Settings",active:false, id:"settings"},
               ].map(item=>(
-                <button key={item.label} onClick={() => { if(item.id === "profile" || item.id === "analytics" || item.id === "projects") setActiveTab(item.id as any); }} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
+                <button key={item.label} onClick={() => { if(["profile","analytics","projects","history"].includes(item.id)) setActiveTab(item.id as any); }} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
                   <span style={{fontSize:16}}>{item.icon}</span>
                   <span style={{fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase"}}>{item.label}</span>
                 </button>
@@ -438,6 +501,8 @@ export default function PortfolioBuilderPage() {
             <AnalyticsPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} />
           ) : activeTab === "projects" ? (
             <ProjectsPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} />
+          ) : activeTab === "history" ? (
+            <HistoryPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} versions={versions} onRestore={handleRestore} />
           ) : (
             <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
               <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>

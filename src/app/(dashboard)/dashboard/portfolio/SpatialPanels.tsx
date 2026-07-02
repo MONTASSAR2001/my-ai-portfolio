@@ -633,3 +633,57 @@ export const InterviewDefender = ({ themeColor, cvData }: { themeColor: string |
     </div>
   );
 };
+
+export const HistoryPanel = ({
+  themeColor, onClose, versions, onRestore
+}: { 
+  themeColor: string | null; 
+  onClose: () => void; 
+  versions: any[]; 
+  onRestore: (v: any) => void;
+}) => {
+  return (
+    <GlassPanel glow="cyan" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px]">⏳</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color: themeColor || "#8888a8"}}>Version History</span>
+        </div>
+        <button onClick={onClose} style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-5" style={{display:"flex",flexDirection:"column",gap:16}}>
+        {versions.length === 0 ? (
+          <p className="text-[10px] text-center" style={{color:"#52526a"}}>No snapshots yet.</p>
+        ) : (
+          <div className="relative border-l border-white/10 ml-2 pl-4 py-2 space-y-6">
+            {versions.map((v, i) => (
+              <motion.div key={v.id || i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="relative">
+                {/* Timeline dot */}
+                <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full" style={{background: themeColor || "#22d3ee", boxShadow: `0 0 10px ${themeColor || '#22d3ee'}`}} />
+                
+                <div className="p-3 rounded-xl border border-white/5" style={{background: "rgba(255,255,255,0.02)"}}>
+                  <p className="text-[10px] font-bold text-white mb-1">
+                    {new Date(v.created_at).toLocaleDateString()} at {new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </p>
+                  <p className="text-[9px] text-gray-400 mb-3">{v.description || "Portfolio Snapshot"}</p>
+                  <button 
+                    onClick={() => onRestore(v)}
+                    className="px-3 py-1.5 w-full rounded-md text-[9px] font-bold uppercase tracking-widest transition-all" 
+                    style={{ 
+                      background: themeColor ? `${themeColor}20` : "rgba(34,211,238,0.1)", 
+                      color: themeColor || "#22d3ee", 
+                      border: `1px solid ${themeColor ? `${themeColor}40` : "rgba(34,211,238,0.3)"}`,
+                      boxShadow: `0 0 10px ${themeColor ? `${themeColor}20` : 'rgba(34,211,238,0.1)'}`
+                    }}>
+                    Restore
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </GlassPanel>
+  );
+};
