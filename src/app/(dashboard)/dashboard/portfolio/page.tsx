@@ -65,8 +65,8 @@ function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfi
 // ── Section label ─────────────────────────────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: TEXT_MUT, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ display: "inline-block", width: 14, height: 1, background: BORDER_LT }} />
+    <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#a1a1c0", fontFamily: "'JetBrains Mono', monospace", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ display: "inline-block", width: 18, height: 1, background: `linear-gradient(90deg, #22d3ee60, transparent)` }} />
       {children}
     </p>
   );
@@ -102,20 +102,32 @@ export default function PortfolioBuilderPage() {
 
   const hex = ACCENTS.find(a => a.id === config.accent)?.hex ?? "#8b5cf6";
 
-  // Underline-style inputs – cyan glow on focus via FocusInput component below
+  // Spotlight inputs: focused = full brightness + cyan glow; others dim
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const mkInp = (id: string) => ({
-    onFocus: () => setFocusedField(id),
-    onBlur:  () => setFocusedField(null),
-    style: {
-      width: "100%", background: "transparent", border: "none",
-      borderBottom: `1px solid ${focusedField === id ? CYAN_GLOW : BORDER_LT}`,
-      outline: "none", color: "#E8E8F0", fontSize: 13, padding: "7px 0",
-      fontFamily: "'JetBrains Mono', monospace", resize: "none" as const,
-      boxShadow: focusedField === id ? `0 1px 0 ${CYAN_GLOW}40` : "none",
-      transition: "border-color 0.2s, box-shadow 0.2s",
-    } as React.CSSProperties,
-  });
+  const mkInp = (id: string) => {
+    const active = focusedField === id;
+    const inactive = focusedField !== null && !active;
+    return {
+      onFocus: () => setFocusedField(id),
+      onBlur:  () => setFocusedField(null),
+      style: {
+        width: "100%",
+        background: active ? "rgba(34,211,238,0.03)" : "transparent",
+        border: "none",
+        borderBottom: `1.5px solid ${active ? CYAN_GLOW : inactive ? "#16161e" : BORDER_LT}`,
+        outline: "none",
+        color: inactive ? "#3a3a52" : "#e8e8f8",
+        fontSize: 13,
+        padding: "8px 4px",
+        fontFamily: "'JetBrains Mono', monospace",
+        resize: "none" as const,
+        boxShadow: active ? `0 2px 12px rgba(34,211,238,0.18), 0 1px 0 ${CYAN_GLOW}60` : "none",
+        transition: "all 0.25s ease",
+        opacity: inactive ? 0.4 : 1,
+        borderRadius: active ? "4px 4px 0 0" : 0,
+      } as React.CSSProperties,
+    };
+  };
 
   const validateSlug = (v: string) => {
     const c = v.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -233,7 +245,7 @@ export default function PortfolioBuilderPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* ── Left Settings Panel ───────────────────────────────────────────── */}
-        <aside className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 340, backgroundColor: BG_PANEL, borderRight: `1px solid ${BORDER}` }}>
+        <aside className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 340, backgroundColor: "#09090B", borderRight: "1px solid #1e1e2a" }}>
 
           {/* Tab switcher — framer-motion layoutId sliding pill */}
           <div className="flex flex-shrink-0 relative" style={{ borderBottom: `1px solid ${BORDER}`, padding: "6px 8px", gap: 4 }}>
@@ -254,21 +266,44 @@ export default function PortfolioBuilderPage() {
 
             {/* ── CONTENT TAB ─────────────────────────────────────────────── */}
             {activeTab === "content" && <>
-              {/* CV Upload — animated gradient border */}
+              {/* AI Dropzone — premium glowing dashed border */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                 <SectionLabel>AI Extraction</SectionLabel>
-                <div style={{ padding: 1, borderRadius: 10, background: `linear-gradient(135deg, ${CYAN_GLOW}55, #6366f155, ${CYAN_GLOW}55)`, backgroundSize: "200% 200%", animation: "gradShift 3s ease infinite" }}>
-                  <div style={{ borderRadius: 9, backgroundColor: BG_CARD, padding: "14px 12px", textAlign: "center" }}>
-                    <button onClick={() => fileRef.current?.click()} disabled={isExtracting}
-                      style={{ width: "100%", padding: "9px 0", background: isExtracting ? "#1a1a28" : `linear-gradient(135deg, #1a1a38, #0f1628)`, border: `1px solid ${CYAN_GLOW}60`, borderRadius: 6, color: isExtracting ? TEXT_SUB : CYAN_GLOW, fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", textTransform: "uppercase", cursor: isExtracting ? "not-allowed" : "pointer", boxShadow: isExtracting ? "none" : `0 0 20px ${CYAN_GLOW}20`, transition: "all 0.2s" }}>
-                      {isExtracting ? "⟳  Extracting with AI…" : "⬆  Upload PDF CV"}
-                    </button>
-                    <p style={{ fontSize: 10, marginTop: 8, color: TEXT_MUT, fontFamily: "'JetBrains Mono', monospace" }}>Auto-fills all fields instantly via AI</p>
-                    <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleCVExtract(e.target.files[0])} />
-                    {extractErr && <p style={{ fontSize: 11, color: "#f87171", marginTop: 6 }}>{extractErr}</p>}
-                  </div>
-                </div>
-                <style>{`@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
+                <motion.div
+                  onClick={() => !isExtracting && fileRef.current?.click()}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  style={{
+                    position: "relative", borderRadius: 8, padding: "20px 16px",
+                    background: "linear-gradient(135deg, #0a0a14 0%, #080810 100%)",
+                    border: `1.5px dashed ${isExtracting ? "#3a3a52" : "#22d3ee50"}`,
+                    boxShadow: isExtracting ? "none" : "0 0 0 1px #22d3ee10, inset 0 0 30px rgba(34,211,238,0.03)",
+                    cursor: isExtracting ? "not-allowed" : "pointer",
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
+                    animation: isExtracting ? "none" : "dropzonePulse 3s ease-in-out infinite",
+                  }}
+                >
+                  {/* Animated corner accents */}
+                  {["top-0 left-0","top-0 right-0","bottom-0 left-0","bottom-0 right-0"].map((pos,i) => (
+                    <span key={i} style={{ position:"absolute", [pos.includes("top") ? "top" : "bottom"]: -1, [pos.includes("left") ? "left" : "right"]: -1, width:10, height:10, borderColor:`${CYAN_GLOW}80`, borderStyle:"solid", borderWidth: pos.includes("top") ? "1.5px 0 0 1.5px" : pos.includes("right") && pos.includes("top") ? "1.5px 1.5px 0 0" : pos.includes("left") ? "0 0 1.5px 1.5px" : "0 1.5px 1.5px 0" }} />
+                  ))}
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>{isExtracting ? "⟳" : "⬆"}</div>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: isExtracting ? TEXT_SUB : "#e0f7fa", fontFamily: "'JetBrains Mono',monospace", marginBottom: 4 }}>
+                    {isExtracting ? "Extracting with AI…" : "Drop PDF CV here"}
+                  </p>
+                  <p style={{ fontSize: 9, color: TEXT_MUT, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.08em" }}>
+                    {isExtracting ? "Parsing your experience & skills" : "or click to browse · AI auto-fills everything"}
+                  </p>
+                  <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleCVExtract(e.target.files[0])} />
+                  {extractErr && <p style={{ fontSize: 10, color: "#f87171", marginTop: 8, fontFamily: "'JetBrains Mono',monospace" }}>{extractErr}</p>}
+                </motion.div>
+                <style>{`
+                  @keyframes dropzonePulse {
+                    0%,100% { box-shadow: 0 0 0 1px #22d3ee08, inset 0 0 20px rgba(34,211,238,0.02); border-color: #22d3ee40; }
+                    50%      { box-shadow: 0 0 0 3px #22d3ee15, inset 0 0 40px rgba(34,211,238,0.06); border-color: #22d3ee90; }
+                  }
+                `}</style>
               </motion.div>
 
               {/* Profile Pic */}
