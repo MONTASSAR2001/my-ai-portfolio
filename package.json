@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.80",
+    "@ai-sdk/react": "^3.0.220",
     "@supabase/supabase-js": "^2.108.2",
     "ai": "^6.0.218",
     "colorthief": "^3.4.0",
