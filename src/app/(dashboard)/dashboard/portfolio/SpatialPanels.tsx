@@ -136,8 +136,32 @@ export const GlowInput = ({
 // ── Bottom floating dock ──────────────────────────────────────────────────────
 export const BottomDock = ({
   onGenerate, isExtracting, templateLabel, accentName,
-}: { onGenerate:()=>void; isExtracting:boolean; templateLabel:string; accentName:string }) => (
-  <div className="fixed bottom-0 left-0 right-0 flex justify-center items-end pb-6 z-50 pointer-events-none">
+  onMicClick, isListening = false, commandFeedback = null
+}: { 
+  onGenerate:()=>void; isExtracting:boolean; templateLabel:string; accentName:string;
+  onMicClick?: ()=>void; isListening?: boolean; commandFeedback?: string | null;
+}) => (
+  <div className="fixed bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-6 z-50 pointer-events-none">
+    <AnimatePresence>
+      {commandFeedback && (
+        <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.9 }}
+          className="mb-4 px-5 py-2.5 rounded-full border"
+          style={{ background: "rgba(0,0,0,0.8)", borderColor: "rgba(34,211,238,0.3)", boxShadow: "0 0 20px rgba(34,211,238,0.15)", backdropFilter: "blur(10px)" }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#22d3ee" }}>{commandFeedback}</p>
+        </motion.div>
+      )}
+      {isListening && !commandFeedback && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+          className="mb-4 px-5 py-2.5 rounded-full border"
+          style={{ background: "rgba(0,0,0,0.8)", borderColor: "rgba(239,68,68,0.3)", boxShadow: "0 0 20px rgba(239,68,68,0.15)", backdropFilter: "blur(10px)" }}>
+          <div className="flex items-center gap-2">
+            <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-red-400">Listening for commands...</p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     <motion.div initial={{ y:100, opacity:0 }} animate={{ y:0, opacity:1 }}
       transition={{ delay:0.5, duration:0.7, ease:[0.22,1,0.36,1] }}
       className="pointer-events-auto relative">
@@ -200,6 +224,24 @@ export const BottomDock = ({
         <div style={{ width:1,height:32,background:"rgba(255,255,255,0.06)" }} />
         {/* Save */}
         <DockItem icon="✓" label="Save" value="Auto-saved" iconColor="#22c55e" />
+        <div style={{ width:1,height:32,background:"rgba(255,255,255,0.06)" }} />
+        {/* Voice Command Mic */}
+        <div className="flex flex-col items-center justify-center px-1">
+          <motion.button onClick={onMicClick} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
+            className="relative flex items-center justify-center rounded-full cursor-pointer pointer-events-auto"
+            style={{ width: 44, height: 44, background: isListening ? "rgba(239,68,68,0.15)" : "rgba(34,211,238,0.05)", border: `1px solid ${isListening ? "rgba(239,68,68,0.5)" : "rgba(34,211,238,0.2)"}`, boxShadow: isListening ? "0 0 20px rgba(239,68,68,0.5)" : "0 0 10px rgba(34,211,238,0.1)" }}>
+            {isListening && (
+              <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }} transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute inset-0 rounded-full border border-red-500" />
+            )}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isListening ? "#ef4444" : "#22d3ee"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   </div>

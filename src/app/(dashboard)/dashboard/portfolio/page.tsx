@@ -42,6 +42,51 @@ function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfi
   return <CinematicTemplateClient p={p} isPreview={true} />;
 }
 
+const useVoiceCommand = () => {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = "en-US";
+        
+        recognitionRef.current.onresult = (event: any) => {
+          const current = event.resultIndex;
+          const result = event.results[current][0].transcript;
+          setTranscript(result);
+        };
+        
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      setTranscript("");
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("Speech recognition error:", e);
+      }
+    }
+  };
+
+  return { isListening, transcript, toggleListening };
+};
+
 export default function PortfolioBuilderPage() {
   const searchParams = useSearchParams();
   const [cv, setCv] = useState<CVData>({ name:"", summary:"", skills:[], experience:[] });
@@ -57,6 +102,41 @@ export default function PortfolioBuilderPage() {
   const [themeColor, setThemeColor] = useState<string|null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
+
+  const { isListening, transcript, toggleListening } = useVoiceCommand();
+  const [commandFeedback, setCommandFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!transcript) return;
+    const text = transcript.toLowerCase();
+    let handled = false;
+    let feedback = "";
+    
+    const templateMatch = TEMPLATES.find(t => text.includes(t.id.replace("-", " ")) || text.includes(t.label.toLowerCase()));
+    if (templateMatch) {
+      setConfig(c => ({...c, templateId: templateMatch.id}));
+      feedback = `Theme -> ${templateMatch.label}`;
+      handled = true;
+    }
+    
+    const colors: Record<string, string> = { "purple": "violet", "cyan": "cyan", "blue": "sky", "emerald": "emerald", "green": "emerald", "indigo": "indigo", "rose": "rose", "amber": "amber", "slate": "slate" };
+    for (const [key, val] of Object.entries(colors)) {
+      if (text.includes(key)) {
+        setConfig(c => ({...c, accent: val}));
+        feedback = feedback ? `${feedback} & Color -> ${val}` : `Color -> ${val}`;
+        handled = true;
+      }
+    }
+
+    if (handled) {
+      setCommandFeedback(`Command accepted: ${feedback}`);
+    } else {
+      setCommandFeedback(`Unrecognized: "${transcript}"`);
+    }
+
+    const timer = setTimeout(() => setCommandFeedback(null), 4000);
+    return () => clearTimeout(timer);
+  }, [transcript]);
 
   useEffect(() => {
     if (config.profileImage) {
@@ -365,7 +445,15 @@ export default function PortfolioBuilderPage() {
       </div>
 
       {/* ── Bottom floating dock ── */}
-      <BottomDock onGenerate={()=>fileRef.current?.click()} isExtracting={isExtracting} templateLabel={tLabel} accentName={config.accent}/>
+      <BottomDock 
+        onGenerate={()=>fileRef.current?.click()} 
+        isExtracting={isExtracting} 
+        templateLabel={tLabel} 
+        accentName={config.accent}
+        onMicClick={toggleListening}
+        isListening={isListening}
+        commandFeedback={commandFeedback}
+      />
 
       <style>{`
         ::-webkit-scrollbar { width: 4px; }
