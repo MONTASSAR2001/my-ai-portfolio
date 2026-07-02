@@ -10,10 +10,12 @@ import ElegantDeveloperTemplateClient from './ElegantDeveloperTemplate.client';
 import ProfessionalPortfolioTemplateClient from './ProfessionalPortfolioTemplate.client';
 import RoboticsPortfolioTemplateClient    from './RoboticsPortfolioTemplate.client';
 import CyberneticTemplateClient           from './CyberneticTemplate.client';
+import { FloatingAdminDockClient }        from './FloatingAdminDock.client';
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface PortfolioRow {
   id: string;
+  user_id: string;
   slug: string; name?: string; role?: string; email?: string;
   summary?: string; skills?: string[]; experience?: ExpItem[];
   layout?: { root?: { props?: Record<string, unknown> } } | null;
@@ -59,14 +61,20 @@ export default async function PublicPortfolioPage({ params }: { params: Promise<
   const rootProps  = p.layout?.root?.props ?? {};
   const templateId = (rootProps.templateId as string) ?? p.template_id ?? 'cinematic';
 
-  if (templateId === 'futuristic')   return <FuturisticTemplateClient              p={p} />;
-  if (templateId === 'premium')      return <PremiumTemplateClient                 p={p} />;
-  if (templateId === 'chic-tech')    return <ChicTechTemplateClient                p={p} />;
-  if (templateId === 'corporate-ai') return <CorporateAITemplateClient             p={p} />;
-  if (templateId === 'elegant')      return <ElegantDeveloperTemplateClient        p={p} />;
-  if (templateId === 'professional') return <ProfessionalPortfolioTemplateClient   p={p} />;
-  if (templateId === 'robotics')     return <RoboticsPortfolioTemplateClient       p={p} />;
-  if (templateId === 'cybernetic')   return <CyberneticTemplateClient              p={p} />;
-  // default → cinematic
-  return <CinematicTemplateClient p={p} />;
+  let Template = CinematicTemplateClient;
+  if (templateId === 'futuristic')   Template = FuturisticTemplateClient;
+  if (templateId === 'premium')      Template = PremiumTemplateClient;
+  if (templateId === 'chic-tech')    Template = ChicTechTemplateClient;
+  if (templateId === 'corporate-ai') Template = CorporateAITemplateClient;
+  if (templateId === 'elegant')      Template = ElegantDeveloperTemplateClient;
+  if (templateId === 'professional') Template = ProfessionalPortfolioTemplateClient;
+  if (templateId === 'robotics')     Template = RoboticsPortfolioTemplateClient;
+  if (templateId === 'cybernetic')   Template = CyberneticTemplateClient;
+
+  return (
+    <>
+      <Template p={p} />
+      <FloatingAdminDockClient portfolio={p} />
+    </>
+  );
 }
