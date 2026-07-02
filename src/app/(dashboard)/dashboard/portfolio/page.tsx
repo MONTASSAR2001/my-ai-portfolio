@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,13 +22,14 @@ interface SiteConfig { templateId: TemplateId; accent: string; profileImage: str
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const BG_APP    = "#09090B";
-const BG_PANEL  = "#18181B";
-const BG_INPUT  = "#27272A";
-const BG_CARD   = "#1C1C1F";
-const BORDER    = "#27272A";
-const BORDER_LT = "#3F3F46";
-const TEXT_MUT  = "#71717A";
-const TEXT_SUB  = "#A1A1AA";
+const BG_PANEL  = "#121214";
+const BG_INPUT  = "transparent";
+const BG_CARD   = "#0E0E10";
+const BORDER    = "#1a1a1f";
+const BORDER_LT = "#2a2a35";
+const TEXT_MUT  = "#52526a";
+const TEXT_SUB  = "#8888a8";
+const CYAN_GLOW = "#22d3ee";
 
 const ACCENTS = [
   { id: "indigo",  hex: "#6366f1" }, { id: "violet",  hex: "#8b5cf6" },
@@ -63,7 +65,8 @@ function LivePreviewCanvas({ cv, config, slug }: { cv: CVData; config: SiteConfi
 // ── Section label ─────────────────────────────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: TEXT_MUT }}>
+    <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: TEXT_MUT, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ display: "inline-block", width: 14, height: 1, background: BORDER_LT }} />
       {children}
     </p>
   );
@@ -99,9 +102,20 @@ export default function PortfolioBuilderPage() {
 
   const hex = ACCENTS.find(a => a.id === config.accent)?.hex ?? "#8b5cf6";
 
-  const inpCls = "w-full px-3 py-2 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all border resize-none";
-  const inpSty = { backgroundColor: BG_INPUT, borderColor: BORDER_LT, color: "#E4E4E7" };
-  const focusRing = { "--tw-ring-color": BORDER_LT } as React.CSSProperties;
+  // Underline-style inputs – cyan glow on focus via FocusInput component below
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const mkInp = (id: string) => ({
+    onFocus: () => setFocusedField(id),
+    onBlur:  () => setFocusedField(null),
+    style: {
+      width: "100%", background: "transparent", border: "none",
+      borderBottom: `1px solid ${focusedField === id ? CYAN_GLOW : BORDER_LT}`,
+      outline: "none", color: "#E8E8F0", fontSize: 13, padding: "7px 0",
+      fontFamily: "'JetBrains Mono', monospace", resize: "none" as const,
+      boxShadow: focusedField === id ? `0 1px 0 ${CYAN_GLOW}40` : "none",
+      transition: "border-color 0.2s, box-shadow 0.2s",
+    } as React.CSSProperties,
+  });
 
   const validateSlug = (v: string) => {
     const c = v.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
@@ -154,7 +168,7 @@ export default function PortfolioBuilderPage() {
   const addExp    = () => setCv(p => ({ ...p, experience: [...p.experience, { title: "", company: "" }] }));
 
   return (
-    <div className="flex flex-col text-white overflow-hidden" style={{ height: "100vh", backgroundColor: BG_APP, fontFamily: "Inter, sans-serif" }}>
+    <div className="flex flex-col text-white overflow-hidden" style={{ height: "100vh", backgroundColor: BG_APP, fontFamily: "'JetBrains Mono', monospace" }}>
 
       {/* ── Top Publish Bar ───────────────────────────────────────────────── */}
       <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 z-10"
@@ -221,15 +235,17 @@ export default function PortfolioBuilderPage() {
         {/* ── Left Settings Panel ───────────────────────────────────────────── */}
         <aside className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 340, backgroundColor: BG_PANEL, borderRight: `1px solid ${BORDER}` }}>
 
-          {/* Tab switcher */}
-          <div className="flex p-2 gap-1 flex-shrink-0" style={{ borderBottom: `1px solid ${BORDER}` }}>
+          {/* Tab switcher — framer-motion layoutId sliding pill */}
+          <div className="flex flex-shrink-0 relative" style={{ borderBottom: `1px solid ${BORDER}`, padding: "6px 8px", gap: 4 }}>
             {(["content", "design"] as SidebarTab[]).map(t => (
-              <button key={t} onClick={() => setActiveTab(t)}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors"
-                style={activeTab === t
-                  ? { backgroundColor: "#3F3F46", color: "#FAFAFA" }
-                  : { color: TEXT_SUB }}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+              <button key={t} onClick={() => setActiveTab(t)} style={{ flex: 1, position: "relative", padding: "6px 0", background: "none", border: "none", cursor: "pointer", zIndex: 1 }}>
+                {activeTab === t && (
+                  <motion.span layoutId="tab-pill" transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                    style={{ position: "absolute", inset: 0, background: "#1e1e28", border: `1px solid ${BORDER_LT}`, borderRadius: 6 }} />
+                )}
+                <span style={{ position: "relative", zIndex: 1, fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", fontFamily: "'JetBrains Mono', monospace", color: activeTab === t ? "#e0e0f0" : TEXT_SUB, textTransform: "uppercase" }}>
+                  {t}
+                </span>
               </button>
             ))}
           </div>
@@ -238,20 +254,22 @@ export default function PortfolioBuilderPage() {
 
             {/* ── CONTENT TAB ─────────────────────────────────────────────── */}
             {activeTab === "content" && <>
-              {/* CV Upload */}
-              <div>
+              {/* CV Upload — animated gradient border */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                 <SectionLabel>AI Extraction</SectionLabel>
-                <div className="p-4 rounded-lg text-center" style={{ border: `1px dashed ${BORDER_LT}`, backgroundColor: BG_APP }}>
-                  <button onClick={() => fileRef.current?.click()} disabled={isExtracting}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white w-full transition-opacity disabled:opacity-50"
-                    style={{ backgroundColor: "#4F46E5" }}>
-                    {isExtracting ? "Extracting with AI…" : "Upload PDF CV"}
-                  </button>
-                  <p className="text-[10px] mt-2" style={{ color: TEXT_MUT }}>Auto-fill all your details instantly.</p>
-                  <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleCVExtract(e.target.files[0])} />
-                  {extractErr && <p className="text-xs text-red-400 mt-2">{extractErr}</p>}
+                <div style={{ padding: 1, borderRadius: 10, background: `linear-gradient(135deg, ${CYAN_GLOW}55, #6366f155, ${CYAN_GLOW}55)`, backgroundSize: "200% 200%", animation: "gradShift 3s ease infinite" }}>
+                  <div style={{ borderRadius: 9, backgroundColor: BG_CARD, padding: "14px 12px", textAlign: "center" }}>
+                    <button onClick={() => fileRef.current?.click()} disabled={isExtracting}
+                      style={{ width: "100%", padding: "9px 0", background: isExtracting ? "#1a1a28" : `linear-gradient(135deg, #1a1a38, #0f1628)`, border: `1px solid ${CYAN_GLOW}60`, borderRadius: 6, color: isExtracting ? TEXT_SUB : CYAN_GLOW, fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.12em", textTransform: "uppercase", cursor: isExtracting ? "not-allowed" : "pointer", boxShadow: isExtracting ? "none" : `0 0 20px ${CYAN_GLOW}20`, transition: "all 0.2s" }}>
+                      {isExtracting ? "⟳  Extracting with AI…" : "⬆  Upload PDF CV"}
+                    </button>
+                    <p style={{ fontSize: 10, marginTop: 8, color: TEXT_MUT, fontFamily: "'JetBrains Mono', monospace" }}>Auto-fills all fields instantly via AI</p>
+                    <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => e.target.files?.[0] && handleCVExtract(e.target.files[0])} />
+                    {extractErr && <p style={{ fontSize: 11, color: "#f87171", marginTop: 6 }}>{extractErr}</p>}
+                  </div>
                 </div>
-              </div>
+                <style>{`@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
+              </motion.div>
 
               {/* Profile Pic */}
               <div>
@@ -271,56 +289,66 @@ export default function PortfolioBuilderPage() {
                 </div>
               </div>
 
-              {/* Personal Info */}
-              <div className="space-y-2">
-                <SectionLabel>Personal Info</SectionLabel>
-                <input value={cv.name} onChange={e => setCv(p => ({ ...p, name: e.target.value }))} className={inpCls} style={inpSty} placeholder="Your name" />
-                <input value={cv.role || ""} onChange={e => setCv(p => ({ ...p, role: e.target.value }))} className={inpCls} style={inpSty} placeholder="Your role (e.g. Software Engineer)" />
-                <input value={cv.email || ""} onChange={e => setCv(p => ({ ...p, email: e.target.value }))} className={inpCls} style={inpSty} placeholder="Your email" />
-                <textarea value={cv.summary} onChange={e => setCv(p => ({ ...p, summary: e.target.value }))} className={inpCls} style={inpSty} rows={4} placeholder="Write your professional summary…" />
-              </div>
-
-              {/* Skills */}
-              <div>
-                <SectionLabel>Skills</SectionLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  {cv.skills.map((s, i) => (
-                    <div key={i} className="flex items-center gap-1 rounded-full px-2.5 py-1" style={{ backgroundColor: BG_INPUT, border: `1px solid ${BORDER_LT}` }}>
-                      <span className="text-xs" style={{ color: "#D4D4D8" }}>{s}</span>
-                      <button onClick={() => setCv(p => ({ ...p, skills: p.skills.filter((_, j) => j !== i) }))} className="text-base leading-none ml-1 hover:text-red-400 transition-colors" style={{ color: TEXT_MUT }}>×</button>
-                    </div>
-                  ))}
-                  <button onClick={() => { const s = prompt("Add skill"); if (s) setCv(p => ({ ...p, skills: [...p.skills, s] })); }}
-                    className="text-xs px-2.5 py-1 rounded-full transition-colors hover:text-white"
-                    style={{ border: `1px dashed ${BORDER_LT}`, color: TEXT_SUB }}>
-                    + Add
-                  </button>
-                </div>
-              </div>
-
-              {/* Experience */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <SectionLabel>Experience</SectionLabel>
-                  <button onClick={addExp} className="text-xs font-semibold transition-opacity hover:opacity-80" style={{ color: hex }}>+ Add Role</button>
-                </div>
-                <div className="space-y-2">
-                  {cv.experience.map((e, i) => (
-                    <div key={i} className="p-3 rounded-lg space-y-2" style={{ backgroundColor: BG_APP, border: `1px solid ${BORDER}` }}>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-semibold" style={{ color: TEXT_MUT }}>Role {i + 1}</span>
-                        <button onClick={() => removeExp(i)} className="text-[10px] text-red-500 hover:text-red-400 transition-colors">Remove</button>
+              {/* Personal Info — staggered reveal + underline inputs */}
+              {([{
+                key: "info", label: "Personal Info", delay: 0.05,
+                content: (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {([{id:"name",ph:"Full name",val:cv.name,fn:(v:string)=>setCv(p=>({...p,name:v}))},{id:"role",ph:"Role · e.g. Software Engineer",val:cv.role||"" ,fn:(v:string)=>setCv(p=>({...p,role:v}))},{id:"email",ph:"Email address",val:cv.email||"",fn:(v:string)=>setCv(p=>({...p,email:v}))}] as {id:string;ph:string;val:string;fn:(v:string)=>void}[]).map(f=>(
+                      <div key={f.id}>
+                        <label style={{ fontSize:9, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", color: focusedField===f.id ? CYAN_GLOW : TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", display:"block", marginBottom:3, transition:"color 0.2s" }}>{f.ph}</label>
+                        <input value={f.val} onChange={e=>f.fn(e.target.value)} placeholder="" {...mkInp(f.id)} />
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input className={inpCls + " text-xs"} style={inpSty} placeholder="Job Title" value={e.title} onChange={ev => setExp(i, "title", ev.target.value)} />
-                        <input className={inpCls + " text-xs"} style={inpSty} placeholder="Company" value={e.company} onChange={ev => setExp(i, "company", ev.target.value)} />
-                      </div>
-                      <input className={inpCls + " text-xs"} style={inpSty} placeholder="Duration (e.g. 2020–2024)" value={e.duration || ""} onChange={ev => setExp(i, "duration", ev.target.value)} />
-                      <textarea className={inpCls + " text-xs"} style={inpSty} rows={2} placeholder="Description…" value={e.description || ""} onChange={ev => setExp(i, "description", ev.target.value)} />
+                    ))}
+                    <div>
+                      <label style={{ fontSize:9, fontWeight:700, letterSpacing:"0.18em", textTransform:"uppercase", color: focusedField==="summary" ? CYAN_GLOW : TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", display:"block", marginBottom:3, transition:"color 0.2s" }}>Professional Summary</label>
+                      <textarea value={cv.summary} onChange={e=>setCv(p=>({...p,summary:e.target.value}))} rows={4} placeholder="" {...mkInp("summary")} />
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )
+              },{
+                key: "skills", label: "Skills", delay: 0.12,
+                content: (
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    {cv.skills.map((s,i)=>(
+                      <div key={i} style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 10px", border:`1px solid ${BORDER_LT}`, borderRadius:4, background:"#0e0e14" }}>
+                        <span style={{ fontSize:11, color:"#c8c8e8", fontFamily:"'JetBrains Mono',monospace" }}>{s}</span>
+                        <button onClick={()=>setCv(p=>({...p,skills:p.skills.filter((_,j)=>j!==i)}))} style={{ color:TEXT_MUT, background:"none", border:"none", cursor:"pointer", fontSize:14, lineHeight:1, padding:0 }}>×</button>
+                      </div>
+                    ))}
+                    <button onClick={()=>{const s=prompt("Add skill");if(s)setCv(p=>({...p,skills:[...p.skills,s]}));}} style={{ fontSize:10, padding:"3px 10px", border:`1px dashed ${BORDER_LT}`, borderRadius:4, color:TEXT_SUB, background:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace" }}>+ Add</button>
+                  </div>
+                )
+              },{
+                key: "exp", label: "Experience", delay: 0.19,
+                content: (
+                  <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                    {cv.experience.map((e,i)=>(
+                      <div key={i} style={{ padding:"10px 12px", border:`1px solid ${BORDER_LT}`, borderRadius:6, background:BG_CARD, display:"flex", flexDirection:"column", gap:8 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between" }}>
+                          <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.15em", textTransform:"uppercase", color:TEXT_MUT, fontFamily:"'JetBrains Mono',monospace" }}>Role {i+1}</span>
+                          <button onClick={()=>removeExp(i)} style={{ fontSize:9, color:"#f87171", background:"none", border:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace" }}>Remove</button>
+                        </div>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                          <input value={e.title} onChange={ev=>setExp(i,"title",ev.target.value)} placeholder="" {...mkInp(`t${i}`)} />
+                          <input value={e.company} onChange={ev=>setExp(i,"company",ev.target.value)} placeholder="" {...mkInp(`c${i}`)} />
+                        </div>
+                        <input value={e.duration||""} onChange={ev=>setExp(i,"duration",ev.target.value)} placeholder="" {...mkInp(`d${i}`)} />
+                        <textarea value={e.description||""} onChange={ev=>setExp(i,"description",ev.target.value)} rows={2} placeholder="" {...mkInp(`desc${i}`)} />
+                      </div>
+                    ))}
+                    <button onClick={addExp} style={{ fontSize:10, padding:"6px 0", border:`1px dashed ${BORDER_LT}`, borderRadius:6, color:TEXT_SUB, background:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", letterSpacing:"0.1em" }}>+ Add Role</button>
+                  </div>
+                )
+              }] as {key:string;label:string;delay:number;content:React.ReactNode}[]).map(section=>(
+                <motion.div key={section.key} initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4, delay:section.delay, ease:[0.22,1,0.36,1] }}>
+                  <p style={{ fontSize:9, fontWeight:700, letterSpacing:"0.22em", textTransform:"uppercase", color:TEXT_MUT, fontFamily:"'JetBrains Mono',monospace", marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ display:"inline-block", width:16, height:1, background:BORDER_LT }} />
+                    {section.label}
+                  </p>
+                  {section.content}
+                </motion.div>
+              ))}
             </>}
 
             {/* ── DESIGN TAB ──────────────────────────────────────────────── */}
@@ -372,35 +400,36 @@ export default function PortfolioBuilderPage() {
           </div>
         </aside>
 
-        {/* ── Right Preview Canvas ──────────────────────────────────────────── */}
-        <main className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: BG_APP }}>
-          {/* Mac-style window header */}
-          <div className="flex-shrink-0 flex items-center justify-between px-5 py-2.5"
-            style={{ backgroundColor: BG_PANEL, borderBottom: `1px solid ${BORDER}` }}>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 block" />
-              <span className="w-3 h-3 rounded-full bg-yellow-500 block" />
-              <span className="w-3 h-3 rounded-full bg-green-500 block" />
-              <span className="ml-3 font-mono text-xs" style={{ color: TEXT_MUT }}>
-                {slug ? `portfolioai.app/p/${slug}` : "portfolioai.app/p/your-slug"}
-              </span>
+        {/* ── Right Preview Canvas — premium anodized chrome ────────────────── */}
+        <main className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: "#060608" }}>
+          {/* Hardware-grade window chrome */}
+          <div style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 20px", background:"linear-gradient(180deg,#1a1a22 0%,#111118 100%)", borderBottom:`1px solid ${BORDER}`, boxShadow:"0 1px 0 rgba(255,255,255,0.04)" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+              {[["#ff5f57","#ff8c00"],["#febc2e","#e6a800"],["#28c840","#1da035"]].map(([bg,shadow],idx)=>(
+                <span key={idx} style={{ width:11, height:11, borderRadius:"50%", background:bg, boxShadow:`0 0 0 0.5px ${shadow}40`, display:"block" }} />
+              ))}
+              <div style={{ marginLeft:12, display:"flex", alignItems:"center", gap:6, background:"#0d0d14", border:`1px solid ${BORDER_LT}`, borderRadius:5, padding:"3px 10px" }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={TEXT_MUT} strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:TEXT_MUT, letterSpacing:"0.04em" }}>
+                  {slug ? `portfolioai.app/p/${slug}` : "portfolioai.app/p/your-slug"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 rounded text-[10px] font-medium" style={{ backgroundColor: BG_INPUT, color: TEXT_SUB, border: `1px solid ${BORDER_LT}` }}>Live Preview</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse block" />
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, letterSpacing:"0.15em", textTransform:"uppercase", color:TEXT_MUT }}>Live Preview</span>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e", display:"block", animation:"pulse 2s infinite" }} />
             </div>
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 flex items-start justify-center p-8 overflow-auto">
-            <div className="w-full max-w-5xl rounded-xl overflow-hidden relative"
-              style={{
-                border: `1px solid ${BORDER_LT}`,
-                boxShadow: "0 24px 80px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)",
-                minHeight: 800,
+          <div style={{ flex:1, display:"flex", alignItems:"flex-start", justifyContent:"center", padding:32, overflowY:"auto", background:"radial-gradient(ellipse at 50% 0%, #0f0f1a 0%, #060608 70%)" }}>
+            <motion.div initial={{ opacity:0, y:20, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} transition={{ duration:0.6, ease:[0.22,1,0.36,1] }}
+              style={{ width:"100%", maxWidth:1024, borderRadius:0, overflow:"hidden", position:"relative", minHeight:800,
+                border:`1px solid #252535`,
+                boxShadow:"0 0 0 1px #1a1a28, 0 32px 100px -10px rgba(0,0,0,0.95), 0 8px 32px -4px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)"
               }}>
               <LivePreviewCanvas cv={cv} config={config} slug={slug} />
-            </div>
+            </motion.div>
           </div>
         </main>
       </div>
