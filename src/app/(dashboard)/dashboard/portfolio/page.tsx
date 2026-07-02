@@ -3,6 +3,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { getColor } from "colorthief";
 import CinematicTemplateClient        from "@/app/p/[slug]/CinematicTemplate.client";
 import FuturisticTemplateClient       from "@/app/p/[slug]/FuturisticTemplate.client";
 import PremiumTemplateClient          from "@/app/p/[slug]/PremiumTemplate.client";
@@ -53,8 +54,28 @@ export default function PortfolioBuilderPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractErr, setExtractErr] = useState("");
   const [focusedField, setFocusedField] = useState<string|null>(null);
+  const [themeColor, setThemeColor] = useState<string|null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (config.profileImage) {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = config.profileImage;
+      img.onload = () => {
+        getColor(img)
+          .then(color => {
+            if (color) {
+              setThemeColor(color.hex());
+            }
+          })
+          .catch(e => console.error("Color extraction failed", e));
+      };
+    } else {
+      setThemeColor(null);
+    }
+  }, [config.profileImage]);
 
   useEffect(() => {
     if (searchParams.get("published") === "1") {
@@ -114,8 +135,8 @@ export default function PortfolioBuilderPage() {
     <div className="relative flex flex-col overflow-hidden" style={{height:"100vh",background:"#030308",fontFamily:"'JetBrains Mono',monospace"}}>
 
       {/* ── Deep space stage glow ── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{background:"radial-gradient(ellipse 80% 40% at 50% 100%,rgba(34,211,238,0.12) 0%,rgba(139,92,246,0.10) 40%,transparent 70%)"}} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{background:"radial-gradient(ellipse 60% 25% at 50% 102%,rgba(34,211,238,0.18) 0%,transparent 60%)"}} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{background:`radial-gradient(ellipse 80% 40% at 50% 100%,${themeColor ? themeColor+'20' : 'rgba(34,211,238,0.12)'} 0%,${themeColor ? themeColor+'15' : 'rgba(139,92,246,0.10)'} 40%,transparent 70%)`}} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{background:`radial-gradient(ellipse 60% 25% at 50% 102%,${themeColor ? themeColor+'30' : 'rgba(34,211,238,0.18)'} 0%,transparent 60%)`}} />
 
       {/* ── Top command bar ── */}
       <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 z-20 border-b" style={{borderColor:"rgba(255,255,255,0.05)",background:"rgba(3,3,8,0.85)",backdropFilter:"blur(20px)"}}>
@@ -155,7 +176,7 @@ export default function PortfolioBuilderPage() {
 
         {/* LEFT PANEL — AI Dropzone */}
         <motion.div initial={{x:-60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:220}}>
-          <GlassPanel glow="cyan" style={{height:"100%",display:"flex",flexDirection:"column"}}>
+          <GlassPanel glow="cyan" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column"}}>
             {/* Sidebar icon nav */}
             <div className="flex flex-col items-center gap-1 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
               {[
@@ -207,7 +228,7 @@ export default function PortfolioBuilderPage() {
 
         {/* CENTER PANEL — Live Preview */}
         <motion.div initial={{y:40,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:0.8,delay:0.15,ease:[0.22,1,0.36,1]}} className="flex-1 flex flex-col min-w-0">
-          <GlassPanel glow="purple" style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 0 60px rgba(139,92,246,0.12),0 40px 120px rgba(0,0,0,0.9),0 0 1px rgba(139,92,246,0.3)"}}>
+          <GlassPanel glow="purple" dynamicGlow={themeColor} style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:themeColor ? `0 0 60px ${themeColor}20,0 40px 120px rgba(0,0,0,0.9),0 0 1px ${themeColor}50` : "0 0 60px rgba(139,92,246,0.12),0 40px 120px rgba(0,0,0,0.9),0 0 1px rgba(139,92,246,0.3)"}}>
             <MacWindowChrome slug={slug}/>
             <div style={{flex:1,overflowY:"auto",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px 24px 32px",background:"rgba(0,0,0,0.2)"}}>
               <motion.div initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{duration:0.6,ease:[0.22,1,0.36,1]}}
@@ -222,7 +243,7 @@ export default function PortfolioBuilderPage() {
 
         {/* RIGHT PANEL — Edit Profile Form */}
         <motion.div initial={{x:60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:300}}>
-          <GlassPanel glow="purple" style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
               <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#8888a8"}}>Edit Profile</span>
               <button style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
@@ -263,9 +284,17 @@ export default function PortfolioBuilderPage() {
                     )}
                   </div>
                 </div>
-                <button onClick={()=>imgRef.current?.click()} className="mt-3 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-white" style={{color:"#22d3ee",background:"none",border:"none",cursor:"pointer"}}>
-                  {config.profileImage ? "Change Avatar" : "Upload Avatar"}
-                </button>
+                <div className="flex items-center gap-2 mt-3">
+                  <button onClick={()=>imgRef.current?.click()} className="text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-white" style={{color: themeColor || "#22d3ee",background:"none",border:"none",cursor:"pointer"}}>
+                    {config.profileImage ? "Change Avatar" : "Upload Avatar"}
+                  </button>
+                  {themeColor && (
+                    <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: `${themeColor}20`, border: `1px solid ${themeColor}40` }}>
+                      <span style={{ fontSize: 10 }}>🪄</span>
+                      <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: themeColor }}>Theme auto-generated</span>
+                    </motion.div>
+                  )}
+                </div>
                 <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e=>e.target.files?.[0]&&handleProfileImg(e.target.files[0])}/>
               </div>
 

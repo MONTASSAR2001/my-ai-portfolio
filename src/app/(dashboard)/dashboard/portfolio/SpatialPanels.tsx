@@ -4,9 +4,10 @@ import React, { useRef } from "react";
 
 // ── Shared glass panel base ───────────────────────────────────────────────────
 export const GlassPanel = ({
-  children, className = "", glow = "cyan", style = {},
-}: { children: React.ReactNode; className?: string; glow?: "cyan"|"purple"|"none"; style?: React.CSSProperties }) => {
+  children, className = "", glow = "cyan", dynamicGlow = null, style = {},
+}: { children: React.ReactNode; className?: string; glow?: "cyan"|"purple"|"none"; dynamicGlow?: string | null; style?: React.CSSProperties }) => {
   const shadow =
+    dynamicGlow ? `0 0 40px ${dynamicGlow}15, 0 0 1px ${dynamicGlow}40` :
     glow === "cyan"   ? "0 0 40px rgba(34,211,238,0.08), 0 0 1px rgba(34,211,238,0.2)" :
     glow === "purple" ? "0 0 40px rgba(139,92,246,0.10), 0 0 1px rgba(139,92,246,0.25)" : "none";
   return (
