@@ -12,7 +12,7 @@ import CorporateAITemplateClient      from "@/app/p/[slug]/CorporateAITemplate.c
 import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTemplate.client";
 import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
 import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
-import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock } from "./SpatialPanels";
+import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel } from "./SpatialPanels";
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; }
@@ -100,6 +100,7 @@ export default function PortfolioBuilderPage() {
   const [extractErr, setExtractErr] = useState("");
   const [focusedField, setFocusedField] = useState<string|null>(null);
   const [themeColor, setThemeColor] = useState<string|null>(null);
+  const [activeTab, setActiveTab] = useState<"profile"|"analytics">("profile");
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
 
@@ -260,16 +261,17 @@ export default function PortfolioBuilderPage() {
             {/* Sidebar icon nav */}
             <div className="flex flex-col items-center gap-1 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
               {[
-                {icon:"✦",label:"AI Upload",active:true},
-                {icon:"👤",label:"Profile",active:false},
-                {icon:"ℹ",label:"About",active:false},
-                {icon:"⚡",label:"Skills",active:false},
-                {icon:"💼",label:"Experience",active:false},
-                {icon:"🗂",label:"Projects",active:false},
-                {icon:"🎨",label:"Design",active:false},
-                {icon:"⚙",label:"Settings",active:false},
+                {icon:"✦",label:"AI Upload",active:activeTab==="profile"||activeTab==="analytics", id:"ai"},
+                {icon:"👤",label:"Profile",active:activeTab==="profile", id:"profile"},
+                {icon:"📈",label:"Analytics",active:activeTab==="analytics", id:"analytics"},
+                {icon:"ℹ",label:"About",active:false, id:"about"},
+                {icon:"⚡",label:"Skills",active:false, id:"skills"},
+                {icon:"💼",label:"Experience",active:false, id:"experience"},
+                {icon:"🗂",label:"Projects",active:false, id:"projects"},
+                {icon:"🎨",label:"Design",active:false, id:"design"},
+                {icon:"⚙",label:"Settings",active:false, id:"settings"},
               ].map(item=>(
-                <button key={item.label} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
+                <button key={item.label} onClick={() => { if(item.id === "profile" || item.id === "analytics") setActiveTab(item.id); }} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
                   <span style={{fontSize:16}}>{item.icon}</span>
                   <span style={{fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase"}}>{item.label}</span>
                 </button>
@@ -321,13 +323,16 @@ export default function PortfolioBuilderPage() {
           </GlassPanel>
         </motion.div>
 
-        {/* RIGHT PANEL — Edit Profile Form */}
+        {/* RIGHT PANEL — Edit Profile Form or Analytics */}
         <motion.div initial={{x:60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:300}}>
-          <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#8888a8"}}>Edit Profile</span>
-              <button style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
-            </div>
+          {activeTab === "analytics" ? (
+            <AnalyticsPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} />
+          ) : (
+            <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color:"#8888a8"}}>Edit Profile</span>
+                <button style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
+              </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4" style={{display:"flex",flexDirection:"column",gap:20}}>
               {/* Premium glowing circular avatar uploader */}
@@ -441,6 +446,7 @@ export default function PortfolioBuilderPage() {
               </div>
             </div>
           </GlassPanel>
+          )}
         </motion.div>
       </div>
 

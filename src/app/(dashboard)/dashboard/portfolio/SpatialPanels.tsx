@@ -259,3 +259,87 @@ function DockItem({ icon, label, value, iconColor="#8b5cf6" }:
     </div>
   );
 }
+
+export const AnalyticsPanel = ({
+  themeColor, onClose
+}: { themeColor: string | null; onClose: () => void }) => {
+  return (
+    <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px]">📈</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color: themeColor || "#8888a8"}}>Analytics & Heatmap</span>
+        </div>
+        <button onClick={onClose} style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-5" style={{display:"flex",flexDirection:"column",gap:24}}>
+        
+        {/* Total Views */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <p className="text-[10px] uppercase tracking-widest" style={{ color: "#8888a8" }}>Total Views This Week</p>
+            <div className="flex items-end gap-3 mt-2">
+              <span className="text-4xl font-bold font-mono" style={{ color: "#fff", textShadow: `0 0 20px ${themeColor || '#22d3ee'}80` }}>1,284</span>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md mb-1" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                <span className="text-[10px] font-bold text-emerald-400">12%</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Avg Time */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <p className="text-[10px] uppercase tracking-widest" style={{ color: "#8888a8" }}>Avg Time on Page</p>
+            <div className="mt-2 text-2xl font-bold font-mono" style={{ color: "#c0c0e0" }}>2m 45s</div>
+          </div>
+        </motion.div>
+
+        {/* Heatmap */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#6666aa" }}>Attention Heatmap</p>
+          <div className="flex flex-col gap-3">
+            {[
+              { label: "Experience", pct: 75 },
+              { label: "Skills", pct: 15 },
+              { label: "About", pct: 10 },
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className="flex justify-between mb-1">
+                  <span className="text-[10px]" style={{ color: "#a0a0c0" }}>{stat.label}</span>
+                  <span className="text-[10px] font-mono text-white">{stat.pct}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${stat.pct}%` }}
+                    transition={{ duration: 1, delay: 0.4 + (i * 0.1), ease: "easeOut" }}
+                    className="h-full"
+                    style={{ background: themeColor ? `linear-gradient(90deg, ${themeColor}80, ${themeColor})` : "linear-gradient(90deg, #22d3ee, #8b5cf6)", boxShadow: `0 0 10px ${themeColor || '#22d3ee'}80` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Recent Viewer */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#6666aa" }}>Recent Activity</p>
+          <div className="flex gap-3 p-3 rounded-xl items-start" style={{ background: "rgba(34,211,238,0.05)", border: "1px dashed rgba(34,211,238,0.2)" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,211,238,0.1)", color: "#22d3ee" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h3l3-9 5 18 3-9h5"/></svg>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-white mb-0.5">Tech Lead <span style={{ color: "#52526a" }}>from</span> Google</p>
+              <p className="text-[10px]" style={{ color: "#a0a0c0" }}>Viewed your portfolio 2 hours ago.</p>
+            </div>
+          </div>
+        </motion.div>
+
+      </div>
+    </GlassPanel>
+  );
+};
