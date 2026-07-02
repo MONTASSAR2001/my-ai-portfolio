@@ -184,7 +184,7 @@ export default function PortfolioBuilderPage() {
 
       {/* ── Top Publish Bar ───────────────────────────────────────────────── */}
       <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 z-10"
-        style={{ backgroundColor: BG_PANEL, borderBottom: `1px solid ${BORDER}` }}>
+        style={{ backgroundColor: BG_APP, borderBottom: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="transition-colors" style={{ color: TEXT_MUT }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#E4E4E7"}
@@ -243,7 +243,7 @@ export default function PortfolioBuilderPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: BG_APP }}>
         {/* ── Left Settings Panel ───────────────────────────────────────────── */}
         <aside className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 340, backgroundColor: "#09090B", borderRight: "1px solid #1e1e2a" }}>
 
@@ -436,9 +436,9 @@ export default function PortfolioBuilderPage() {
         </aside>
 
         {/* ── Right Preview Canvas — premium anodized chrome ────────────────── */}
-        <main className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: "#060608" }}>
+        <main className="flex-1 overflow-hidden flex flex-col" style={{ backgroundColor: BG_APP }}>
           {/* Hardware-grade window chrome */}
-          <div style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 20px", background:"linear-gradient(180deg,#1a1a22 0%,#111118 100%)", borderBottom:`1px solid ${BORDER}`, boxShadow:"0 1px 0 rgba(255,255,255,0.04)" }}>
+          <div style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 20px", backgroundColor: BG_APP, borderBottom:`1px solid ${BORDER}` }}>
             <div style={{ display:"flex", alignItems:"center", gap:7 }}>
               {[["#ff5f57","#ff8c00"],["#febc2e","#e6a800"],["#28c840","#1da035"]].map(([bg,shadow],idx)=>(
                 <span key={idx} style={{ width:11, height:11, borderRadius:"50%", background:bg, boxShadow:`0 0 0 0.5px ${shadow}40`, display:"block" }} />
@@ -457,7 +457,7 @@ export default function PortfolioBuilderPage() {
           </div>
 
           {/* Canvas */}
-          <div style={{ flex:1, display:"flex", alignItems:"flex-start", justifyContent:"center", padding:32, overflowY:"auto", background:"radial-gradient(ellipse at 50% 0%, #0f0f1a 0%, #060608 70%)" }}>
+          <div style={{ flex:1, display:"flex", alignItems:"flex-start", justifyContent:"center", padding:32, overflowY:"auto", backgroundColor: BG_APP }}>
             <motion.div initial={{ opacity:0, y:20, scale:0.98 }} animate={{ opacity:1, y:0, scale:1 }} transition={{ duration:0.6, ease:[0.22,1,0.36,1] }}
               style={{ width:"100%", maxWidth:1024, borderRadius:0, overflow:"hidden", position:"relative", minHeight:800,
                 border:`1px solid #252535`,
