@@ -14,7 +14,7 @@ import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolio
 import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock } from "./SpatialPanels";
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
-interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; }
+interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; }
 type TemplateId = "cinematic"|"futuristic"|"premium"|"chic-tech"|"corporate-ai"|"elegant"|"professional"|"robotics";
 interface SiteConfig { templateId: TemplateId; accent: string; profileImage: string; }
 
@@ -229,25 +229,55 @@ export default function PortfolioBuilderPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4" style={{display:"flex",flexDirection:"column",gap:20}}>
-              {/* Profile image row */}
-              <div className="flex items-center gap-3">
-                <div onClick={()=>imgRef.current?.click()} className="w-12 h-12 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
-                  style={{border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.04)"}}>
-                  {config.profileImage
-                    ? <img src={config.profileImage} className="w-full h-full object-cover" alt="Profile"/>
-                    : <div className="w-full h-full flex items-center justify-center text-lg opacity-20">📷</div>}
+              {/* Premium glowing circular avatar uploader */}
+              <div className="flex flex-col items-center justify-center mb-4">
+                <div 
+                  onClick={()=>imgRef.current?.click()} 
+                  className="relative flex items-center justify-center rounded-full cursor-pointer group"
+                  style={{width: 80, height: 80}}
+                >
+                  <motion.div 
+                    animate={{ rotate: 360 }} 
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ 
+                      border: "1.5px solid transparent", 
+                      background: "conic-gradient(from 0deg, #22d3ee, #8b5cf6, #22d3ee) border-box",
+                      WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)", 
+                      WebkitMaskComposite: "destination-out",
+                      maskComposite: "exclude" 
+                    }} 
+                  />
+                  <div 
+                    className="absolute inset-1 rounded-full overflow-hidden flex items-center justify-center"
+                    style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "inset 0 0 20px rgba(139,92,246,0.15)" }}
+                  >
+                    {config.profileImage ? (
+                      <img src={config.profileImage} className="w-full h-full object-cover" alt="Profile" />
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(34,211,238,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <button onClick={()=>imgRef.current?.click()} className="text-[11px] font-semibold" style={{color:"#22d3ee",background:"none",border:"none",cursor:"pointer"}}>Change Photo</button>
-                  <p className="text-[9px]" style={{color:"#52526a"}}>JPG, PNG or GIF</p>
-                </div>
+                <button onClick={()=>imgRef.current?.click()} className="mt-3 text-[10px] font-bold uppercase tracking-widest transition-colors hover:text-white" style={{color:"#22d3ee",background:"none",border:"none",cursor:"pointer"}}>
+                  {config.profileImage ? "Change Avatar" : "Upload Avatar"}
+                </button>
                 <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={e=>e.target.files?.[0]&&handleProfileImg(e.target.files[0])}/>
               </div>
 
               <GlowInput label="Full Name" value={cv.name} onChange={v=>setCv(p=>({...p,name:v}))} {...fProps("name")}/>
               <GlowInput label="Title" value={cv.role||""} onChange={v=>setCv(p=>({...p,role:v}))} {...fProps("role")}/>
-              <GlowInput label="Location" value={(cv as any).location||""} onChange={v=>setCv(p=>({...p,location:v} as any))} {...fProps("location")}/>
+              <GlowInput label="Location" value={cv.location||""} onChange={v=>setCv(p=>({...p,location:v}))} {...fProps("location")}/>
               <GlowInput label="Email" value={cv.email||""} onChange={v=>setCv(p=>({...p,email:v}))} {...fProps("email")}/>
+              <GlowInput label="Phone" value={cv.phone||""} onChange={v=>setCv(p=>({...p,phone:v}))} {...fProps("phone")}/>
+              <GlowInput label="LinkedIn" value={cv.linkedin||""} onChange={v=>setCv(p=>({...p,linkedin:v}))} {...fProps("linkedin")}/>
+              <GlowInput label="GitHub" value={cv.github||""} onChange={v=>setCv(p=>({...p,github:v}))} {...fProps("github")}/>
+              <GlowInput label="WhatsApp" value={cv.whatsapp||""} onChange={v=>setCv(p=>({...p,whatsapp:v}))} {...fProps("whatsapp")}/>
+              <GlowInput label="Facebook" value={cv.facebook||""} onChange={v=>setCv(p=>({...p,facebook:v}))} {...fProps("facebook")}/>
               <GlowInput label="Bio" value={cv.summary} onChange={v=>setCv(p=>({...p,summary:v}))} multiline rows={4} {...fProps("summary")}/>
 
               {/* Char count */}
