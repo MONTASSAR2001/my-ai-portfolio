@@ -99,6 +99,7 @@ export default function PortfolioBuilderPage() {
   const [publishStatus, setPublishStatus] = useState<"idle"|"success"|"error">("idle");
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractErr, setExtractErr] = useState("");
+  const [isTranslating, setIsTranslating] = useState(false);
   const [focusedField, setFocusedField] = useState<string|null>(null);
   const [themeColor, setThemeColor] = useState<string|null>(null);
   const [activeTab, setActiveTab] = useState<"profile"|"analytics"|"projects">("profile");
@@ -275,6 +276,26 @@ export default function PortfolioBuilderPage() {
     finally{setIsPublishing(false);}
   };
 
+  const handleTranslate = async (lang: string) => {
+    if (!cv.name && !cv.summary) return;
+    setIsTranslating(true);
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvData: cv, targetLang: lang })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to translate");
+      setCv({ ...cv, ...data.translatedCV });
+    } catch(err) {
+      console.error(err);
+      alert("Translation failed. Please try again.");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const setExp    = useCallback((i:number,field:keyof ExpItem,val:string)=>setCv(p=>({...p,experience:p.experience.map((e,j)=>j===i?{...e,[field]:val}:e)})),[]);
   const removeExp = (i:number)=>setCv(p=>({...p,experience:p.experience.filter((_,j)=>j!==i)}));
   const addExp    = ()=>setCv(p=>({...p,experience:[...p.experience,{title:"",company:""}]}));
@@ -309,6 +330,25 @@ export default function PortfolioBuilderPage() {
           <div className="flex items-center gap-1.5 text-xs" style={{color:"#52526a"}}>
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
             Auto-saved
+          </div>
+          <div className="relative group">
+            <button disabled={isTranslating} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50" style={{background:"rgba(139,92,246,0.15)",border:"1px solid rgba(139,92,246,0.3)", boxShadow:"0 0 15px rgba(139,92,246,0.15)"}}>
+              {isTranslating ? (
+                <svg className="animate-spin h-3 w-3 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              ) : (
+                <svg className="w-3 h-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+              )}
+              {isTranslating ? "Translating..." : "Translate CV"}
+            </button>
+            <div className="absolute right-0 mt-2 w-32 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden" style={{background:"rgba(13,13,30,0.95)",border:"1px solid rgba(139,92,246,0.3)",boxShadow:"0 10px 30px rgba(0,0,0,0.8),0 0 20px rgba(139,92,246,0.2)",backdropFilter:"blur(12px)"}}>
+              <div className="flex flex-col">
+                {[ {l:"English",f:"🇺🇸"}, {l:"French",f:"🇫🇷"}, {l:"Spanish",f:"🇪🇸"}, {l:"German",f:"🇩🇪"}, {l:"Arabic",f:"🇦🇪"} ].map(lang => (
+                  <button key={lang.l} onClick={() => handleTranslate(lang.l)} className="flex items-center gap-2 px-4 py-2.5 text-xs text-white hover:bg-white/10 transition-colors text-left">
+                    <span>{lang.f}</span> {lang.l}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <button className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)"}}>Preview</button>
           {publishStatus==="success" && (
