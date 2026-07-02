@@ -1,6 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
 
 // ── Shared glass panel base ───────────────────────────────────────────────────
 export const GlassPanel = ({
@@ -341,5 +342,294 @@ export const AnalyticsPanel = ({
 
       </div>
     </GlassPanel>
+  );
+};
+
+export const GitHubCity = ({ themeColor }: { themeColor: string | null }) => {
+  const [hovered, setHovered] = useState<{ x: number, y: number } | null>(null);
+  
+  // 7x7 grid mock data
+  const grid = Array.from({ length: 7 }, (_, x) =>
+    Array.from({ length: 7 }, (_, y) => ({
+      x, y,
+      commits: Math.floor(Math.random() * 20), // 0 to 19
+      date: `May ${x * 7 + y + 1}th`
+    }))
+  );
+
+  return (
+    <div className="relative w-full h-[240px] flex items-center justify-center overflow-visible" style={{ perspective: "1000px" }}>
+      <motion.div 
+        initial={{ rotateX: 60, rotateZ: -45, y: 50, opacity: 0 }}
+        animate={{ rotateX: 60, rotateZ: -45, y: 0, opacity: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        className="relative"
+        style={{ transformStyle: "preserve-3d", width: 140, height: 140 }}
+      >
+        {/* Wireframe Base */}
+        <div className="absolute inset-0 border" style={{
+          borderColor: `${themeColor || '#10b981'}40`,
+          background: `linear-gradient(to right, ${themeColor || '#10b981'}10 1px, transparent 1px), linear-gradient(to bottom, ${themeColor || '#10b981'}10 1px, transparent 1px)`,
+          backgroundSize: "20px 20px",
+          boxShadow: `0 0 40px ${themeColor || '#10b981'}20`
+        }} />
+
+        {/* Buildings */}
+        {grid.flatMap((col, x) => col.map((cell, y) => {
+          const size = 14; 
+          const gap = 6;
+          const left = x * (size + gap);
+          const top = y * (size + gap);
+          const h = cell.commits === 0 ? 2 : cell.commits * 2.5;
+          const isHovered = hovered?.x === x && hovered?.y === y;
+          const glowColor = themeColor || "#10b981";
+
+          return (
+            <motion.div 
+              key={`${x}-${y}`}
+              className="absolute"
+              style={{
+                left, top, width: size, height: size,
+                transformStyle: "preserve-3d",
+                cursor: "pointer"
+              }}
+              onMouseEnter={() => setHovered({x, y})}
+              onMouseLeave={() => setHovered(null)}
+              animate={{ translateZ: isHovered ? 10 : 0 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              {cell.commits > 0 && (
+                <>
+                  {/* Top Face */}
+                  <div className="absolute inset-0" style={{
+                    background: glowColor,
+                    transform: `translateZ(${h}px)`,
+                    boxShadow: isHovered ? `0 0 15px ${glowColor}, inset 0 0 10px #fff` : `inset 0 0 8px rgba(0,0,0,0.5)`,
+                    border: `1px solid ${glowColor}`,
+                    opacity: 0.9,
+                    transition: "box-shadow 0.3s"
+                  }} />
+                  {/* Front Face */}
+                  <div className="absolute bottom-0 left-0 w-full" style={{
+                    height: h,
+                    background: "linear-gradient(to bottom, #000, #030308)",
+                    borderLeft: `1px solid ${glowColor}40`,
+                    borderRight: `1px solid ${glowColor}40`,
+                    borderBottom: `1px solid ${glowColor}40`,
+                    transformOrigin: "bottom",
+                    transform: "rotateX(-90deg)",
+                    opacity: 0.8
+                  }} />
+                  {/* Right Face */}
+                  <div className="absolute top-0 right-0 h-full" style={{
+                    width: h,
+                    background: "linear-gradient(to bottom, #000, #030308)",
+                    borderTop: `1px solid ${glowColor}40`,
+                    borderBottom: `1px solid ${glowColor}40`,
+                    borderRight: `1px solid ${glowColor}40`,
+                    transformOrigin: "right",
+                    transform: "rotateY(90deg)",
+                    opacity: 0.6
+                  }} />
+                </>
+              )}
+              {cell.commits === 0 && (
+                <div className="absolute inset-0" style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.05)"
+                }} />
+              )}
+            </motion.div>
+          );
+        }))}
+      </motion.div>
+
+      {/* Floating Tooltip */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="absolute top-0 pointer-events-none px-4 py-2 rounded-full z-50"
+            style={{ 
+              background: "rgba(0,0,0,0.8)", 
+              border: `1px solid ${themeColor || '#10b981'}40`,
+              backdropFilter: "blur(12px)",
+              boxShadow: `0 0 20px ${themeColor || '#10b981'}20`
+            }}
+          >
+            {(() => {
+              const cell = grid[hovered.x][hovered.y];
+              return (
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white whitespace-nowrap">
+                  <span style={{ color: themeColor || '#10b981' }}>{cell.commits} commits</span> on {cell.date}
+                </p>
+              );
+            })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export const ProjectsPanel = ({
+  themeColor, onClose
+}: { themeColor: string | null; onClose: () => void }) => {
+  return (
+    <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px]">🗂</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{color: themeColor || "#8888a8"}}>Projects & Activity</span>
+        </div>
+        <button onClick={onClose} style={{color:"#52526a",background:"none",border:"none",cursor:"pointer",fontSize:16}}>×</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-5" style={{display:"flex",flexDirection:"column",gap:24}}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#6666aa" }}>Contribution Matrix</p>
+          <div className="p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <GitHubCity themeColor={themeColor} />
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#6666aa" }}>Pinned Projects</p>
+          <div className="flex flex-col gap-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="p-3 rounded-lg flex items-center justify-between" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <div>
+                  <p className="text-[11px] font-bold text-white mb-0.5">Project Alpha {i}</p>
+                  <p className="text-[9px]" style={{ color: "#a0a0c0" }}>React • Next.js • WebGL</p>
+                </div>
+                <button className="px-3 py-1.5 rounded-md text-[9px] font-bold uppercase tracking-widest" style={{ background: themeColor ? `${themeColor}20` : "rgba(34,211,238,0.1)", color: themeColor || "#22d3ee", border: `1px solid ${themeColor ? `${themeColor}40` : "rgba(34,211,238,0.3)"}` }}>Edit</button>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </GlassPanel>
+  );
+};
+
+export const InterviewDefender = ({ themeColor, cvData }: { themeColor: string | null, cvData?: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: '/api/chat',
+    body: { cvData },
+    initialMessages: [
+      { id: '1', role: 'assistant', content: `Hello! I am ${cvData?.name || "the creator"}'s AI Assistant. Ask me anything about their experience, skills, or projects.` }
+    ]
+  });
+
+  React.useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isLoading]);
+
+  return (
+    <div className="absolute bottom-6 right-6 z-50" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsOpen(true)}
+            className="relative flex items-center justify-center rounded-full shadow-2xl cursor-pointer pointer-events-auto"
+            style={{ width: 64, height: 64, background: "rgba(0,0,0,0.8)", border: `1px solid ${themeColor || '#22d3ee'}40` }}
+          >
+            <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 rounded-full pointer-events-none" style={{ boxShadow: `0 0 30px ${themeColor || '#22d3ee'}` }} />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={themeColor || "#22d3ee"} strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              <path d="M9 10h.01M15 10h.01M12 10h.01"/>
+            </svg>
+            <div className="absolute -top-8 right-0 px-3 py-1 rounded-full whitespace-nowrap pointer-events-none" style={{ background: "rgba(0,0,0,0.9)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <span className="text-[10px] font-bold tracking-widest text-white uppercase">Interview Me</span>
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9, transformOrigin: "bottom right" }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="flex flex-col rounded-2xl overflow-hidden shadow-2xl pointer-events-auto"
+            style={{ 
+              width: 320, height: 440, 
+              background: "rgba(0,0,0,0.7)", 
+              backdropFilter: "blur(24px)",
+              border: `1px solid ${themeColor || '#22d3ee'}40`,
+              boxShadow: `0 20px 40px rgba(0,0,0,0.8), 0 0 40px ${themeColor || '#22d3ee'}20`
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ background: themeColor || "#22d3ee", boxShadow: `0 0 8px ${themeColor || '#22d3ee'}` }} />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white">AI Defender</span>
+              </div>
+              <button onClick={() => setIsOpen(false)} style={{ color: "#8888a8", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+              {messages.map((m) => (
+                <motion.div 
+                  key={m.id} 
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className="px-3 py-2 rounded-xl max-w-[85%]" style={{ 
+                    background: m.role === 'user' ? (themeColor ? `${themeColor}20` : "rgba(34,211,238,0.15)") : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${m.role === 'user' ? (themeColor ? `${themeColor}40` : "rgba(34,211,238,0.3)") : "rgba(255,255,255,0.05)"}`,
+                    color: m.role === 'user' ? "#fff" : "#c0c0e0",
+                    fontSize: 12, lineHeight: 1.5
+                  }}>
+                    {m.content}
+                  </div>
+                </motion.div>
+              ))}
+              {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                  <div className="px-3 py-2 rounded-xl flex gap-1" style={{ background: "rgba(255,255,255,0.05)" }}>
+                    <motion.div animate={{ y: [0,-3,0] }} transition={{ repeat: Infinity, delay: 0 }} className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                    <motion.div animate={{ y: [0,-3,0] }} transition={{ repeat: Infinity, delay: 0.2 }} className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                    <motion.div animate={{ y: [0,-3,0] }} transition={{ repeat: Infinity, delay: 0.4 }} className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                  </div>
+                </motion.div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="p-3 border-t" style={{ borderColor: "rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.4)" }}>
+              <form onSubmit={handleSubmit} className="relative">
+                <input 
+                  value={input} onChange={handleInputChange}
+                  placeholder="Ask me anything..." 
+                  className="w-full bg-transparent text-white text-xs px-3 py-2 outline-none rounded-lg"
+                  style={{ border: `1px solid ${themeColor || '#22d3ee'}40` }}
+                />
+                <button type="submit" disabled={isLoading} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 disabled:opacity-50" style={{ color: themeColor || "#22d3ee" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };

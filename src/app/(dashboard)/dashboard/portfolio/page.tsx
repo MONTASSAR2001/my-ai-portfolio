@@ -12,7 +12,7 @@ import CorporateAITemplateClient      from "@/app/p/[slug]/CorporateAITemplate.c
 import ElegantDeveloperTemplateClient from "@/app/p/[slug]/ElegantDeveloperTemplate.client";
 import ProfessionalPortfolioTemplateClient from "@/app/p/[slug]/ProfessionalPortfolioTemplate.client";
 import RoboticsPortfolioTemplateClient    from "@/app/p/[slug]/RoboticsPortfolioTemplate.client";
-import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel } from "./SpatialPanels";
+import { GlassPanel, NeonRing, MacWindowChrome, GlowInput, BottomDock, AnalyticsPanel, ProjectsPanel, InterviewDefender } from "./SpatialPanels";
 
 interface ExpItem { title: string; company: string; duration?: string; description?: string; }
 interface CVData { name: string; role?: string; email?: string; location?: string; bio?: string; summary: string; skills: string[]; experience: ExpItem[]; phone?: string; linkedin?: string; github?: string; whatsapp?: string; facebook?: string; }
@@ -100,7 +100,7 @@ export default function PortfolioBuilderPage() {
   const [extractErr, setExtractErr] = useState("");
   const [focusedField, setFocusedField] = useState<string|null>(null);
   const [themeColor, setThemeColor] = useState<string|null>(null);
-  const [activeTab, setActiveTab] = useState<"profile"|"analytics">("profile");
+  const [activeTab, setActiveTab] = useState<"profile"|"analytics"|"projects">("profile");
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef  = useRef<HTMLInputElement>(null);
 
@@ -261,17 +261,17 @@ export default function PortfolioBuilderPage() {
             {/* Sidebar icon nav */}
             <div className="flex flex-col items-center gap-1 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
               {[
-                {icon:"✦",label:"AI Upload",active:activeTab==="profile"||activeTab==="analytics", id:"ai"},
+                {icon:"✦",label:"AI Upload",active:activeTab==="profile"||activeTab==="analytics"||activeTab==="projects", id:"ai"},
                 {icon:"👤",label:"Profile",active:activeTab==="profile", id:"profile"},
                 {icon:"📈",label:"Analytics",active:activeTab==="analytics", id:"analytics"},
+                {icon:"🗂",label:"Projects",active:activeTab==="projects", id:"projects"},
                 {icon:"ℹ",label:"About",active:false, id:"about"},
                 {icon:"⚡",label:"Skills",active:false, id:"skills"},
                 {icon:"💼",label:"Experience",active:false, id:"experience"},
-                {icon:"🗂",label:"Projects",active:false, id:"projects"},
                 {icon:"🎨",label:"Design",active:false, id:"design"},
                 {icon:"⚙",label:"Settings",active:false, id:"settings"},
               ].map(item=>(
-                <button key={item.label} onClick={() => { if(item.id === "profile" || item.id === "analytics") setActiveTab(item.id); }} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
+                <button key={item.label} onClick={() => { if(item.id === "profile" || item.id === "analytics" || item.id === "projects") setActiveTab(item.id as any); }} title={item.label} className="w-full flex flex-col items-center gap-1 py-2 rounded-lg transition-all" style={{background:item.active?"rgba(34,211,238,0.08)":"transparent",color:item.active?"#22d3ee":"#52526a"}}>
                   <span style={{fontSize:16}}>{item.icon}</span>
                   <span style={{fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase"}}>{item.label}</span>
                 </button>
@@ -314,19 +314,22 @@ export default function PortfolioBuilderPage() {
             <MacWindowChrome slug={slug}/>
             <div style={{flex:1,overflowY:"auto",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px 24px 32px",background:"rgba(0,0,0,0.2)"}}>
               <motion.div initial={{opacity:0,scale:0.97}} animate={{opacity:1,scale:1}} transition={{duration:0.6,ease:[0.22,1,0.36,1]}}
-                style={{width:"100%",maxWidth:1024,minHeight:700,borderRadius:8,overflow:"hidden",
+                style={{width:"100%",maxWidth:1024,minHeight:700,borderRadius:8,overflow:"hidden",position:"relative",
                   border:"1px solid rgba(255,255,255,0.06)",
                   boxShadow:"0 32px 100px -10px rgba(0,0,0,0.95),0 8px 32px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.04)"}}>
                 <LivePreviewCanvas cv={cv} config={config} slug={slug}/>
+                <InterviewDefender themeColor={themeColor} cvData={cv} />
               </motion.div>
             </div>
           </GlassPanel>
         </motion.div>
 
-        {/* RIGHT PANEL — Edit Profile Form or Analytics */}
+        {/* RIGHT PANEL — Edit Profile Form or Analytics or Projects */}
         <motion.div initial={{x:60,opacity:0}} animate={{x:0,opacity:1}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="flex-shrink-0" style={{width:300}}>
           {activeTab === "analytics" ? (
             <AnalyticsPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} />
+          ) : activeTab === "projects" ? (
+            <ProjectsPanel themeColor={themeColor} onClose={() => setActiveTab("profile")} />
           ) : (
             <GlassPanel glow="purple" dynamicGlow={themeColor} style={{height:"100%",display:"flex",flexDirection:"column",overflow:"hidden"}}>
               <div className="flex items-center justify-between px-5 py-4 border-b" style={{borderColor:"rgba(255,255,255,0.05)"}}>
