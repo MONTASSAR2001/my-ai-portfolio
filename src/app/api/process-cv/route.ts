@@ -51,9 +51,10 @@ export async function POST(req: Request) {
     }
 
     // 3. Process with Groq using AI SDK
-    console.log('🔄 Calling Groq (llama-3.1-70b-versatile)…');
+    console.log('🔄 Calling Groq (mixtral-8x7b-32768)…');
     const { object } = await generateObject({
-      model: groq('llama-3.1-70b-versatile'),
+      model: groq('mixtral-8x7b-32768'),
+      mode: 'json',
       system: SYSTEM_PROMPT,
       prompt: extractedText,
       schema: cvSchema,
