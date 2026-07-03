@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import PDFParser from 'pdf2json';
-import { createOpenAI } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const maxDuration = 60;
-
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 const cvSchema = z.object({
   name: z.string(),
@@ -50,10 +45,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'PDF appears to be empty or image-only.' }, { status: 400 });
     }
 
-    // 3. Process with OpenRouter using AI SDK
-    console.log('🔄 Calling OpenRouter (meta-llama/llama-3.1-8b-instruct:free)…');
+    // 3. Process with Google Gemini using AI SDK
+    console.log('🔄 Calling Google (gemini-1.5-flash)…');
     const { object } = await generateObject({
-      model: openrouter('meta-llama/llama-3.1-8b-instruct:free'),
+      model: google('gemini-1.5-flash'),
       system: SYSTEM_PROMPT,
       prompt: extractedText,
       schema: cvSchema,

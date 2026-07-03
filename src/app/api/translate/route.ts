@@ -1,13 +1,8 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const maxDuration = 60;
-
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 const cvSchema = z.object({
   name: z.string(),
@@ -42,7 +37,7 @@ Your task is to translate the provided CV/Portfolio data into ${targetLang}.
 - Return the exact same JSON structure, with all text fields properly translated to ${targetLang}.`;
 
     const { object } = await generateObject({
-      model: openrouter('meta-llama/llama-3.1-8b-instruct:free'),
+      model: google('gemini-1.5-flash'),
       system: systemPrompt,
       prompt: JSON.stringify(cvData),
       schema: cvSchema,
