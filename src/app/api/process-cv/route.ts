@@ -6,9 +6,9 @@ import { z } from 'zod';
 
 export const maxDuration = 60;
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 const cvSchema = z.object({
@@ -50,11 +50,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'PDF appears to be empty or image-only.' }, { status: 400 });
     }
 
-    // 3. Process with Groq using AI SDK
-    console.log('🔄 Calling Groq (llama-3.1-70b-versatile)…');
+    // 3. Process with OpenRouter using AI SDK
+    console.log('🔄 Calling OpenRouter (meta-llama/llama-3.1-8b-instruct:free)…');
     const { object } = await generateObject({
-      model: groq('llama-3.1-70b-versatile'),
-      mode: 'tool',
+      model: openrouter('meta-llama/llama-3.1-8b-instruct:free'),
       system: SYSTEM_PROMPT,
       prompt: extractedText,
       schema: cvSchema,

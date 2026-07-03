@@ -4,9 +4,9 @@ import { z } from 'zod';
 
 export const maxDuration = 60;
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 const cvSchema = z.object({
@@ -42,8 +42,7 @@ Your task is to translate the provided CV/Portfolio data into ${targetLang}.
 - Return the exact same JSON structure, with all text fields properly translated to ${targetLang}.`;
 
     const { object } = await generateObject({
-      model: groq('llama-3.1-8b-instant'),
-      mode: 'tool',
+      model: openrouter('meta-llama/llama-3.1-8b-instruct:free'),
       system: systemPrompt,
       prompt: JSON.stringify(cvData),
       schema: cvSchema,
