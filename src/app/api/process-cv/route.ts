@@ -46,9 +46,9 @@ export async function POST(req: Request) {
     }
 
     // 3. Process with Google Gemini using AI SDK
-    console.log('🔄 Calling Google (gemini-1.5-pro)…');
+    console.log('🔄 Calling Google (gemini-1.5-pro-latest)…');
     const { object } = await generateObject({
-      model: google('gemini-1.5-pro'),
+      model: google('gemini-1.5-pro-latest'),
       system: SYSTEM_PROMPT,
       prompt: extractedText,
       schema: cvSchema,

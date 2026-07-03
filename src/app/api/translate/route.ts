@@ -37,7 +37,7 @@ Your task is to translate the provided CV/Portfolio data into ${targetLang}.
 - Return the exact same JSON structure, with all text fields properly translated to ${targetLang}.`;
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-pro'),
+      model: google('gemini-1.5-pro-latest'),
       system: systemPrompt,
       prompt: JSON.stringify(cvData),
       schema: cvSchema,
