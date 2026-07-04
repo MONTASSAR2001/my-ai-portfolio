@@ -2,23 +2,9 @@ import { NextResponse } from 'next/server';
 import PDFParser from 'pdf2json';
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
-import { z } from 'zod';
+import { cvSchema } from '@/lib/schemas/cv-schema';
 
 export const maxDuration = 60;
-
-const cvSchema = z.object({
-  name: z.string(),
-  summary: z.string(),
-  skills: z.array(z.string()),
-  experience: z.array(
-    z.object({
-      title: z.string(),
-      company: z.string(),
-      duration: z.string().optional().nullable(),
-      description: z.string().optional().nullable(),
-    })
-  ),
-});
 
 const SYSTEM_PROMPT =
   'You are an expert HR AI. Extract structured data from the CV text provided by the user. ' +

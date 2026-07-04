@@ -1,30 +1,8 @@
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
-import { z } from 'zod';
+import { cvSchema } from '@/lib/schemas/cv-schema';
 
 export const maxDuration = 60;
-
-const cvSchema = z.object({
-  name: z.string(),
-  role: z.string().optional().nullable(),
-  email: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  bio: z.string().optional().nullable(),
-  summary: z.string(),
-  skills: z.array(z.string()),
-  experience: z.array(z.object({
-    title: z.string(),
-    company: z.string(),
-    duration: z.string().optional().nullable(),
-    description: z.string().optional().nullable(),
-  })),
-  phone: z.string().optional().nullable(),
-  linkedin: z.string().optional().nullable(),
-  github: z.string().optional().nullable(),
-  whatsapp: z.string().optional().nullable(),
-  facebook: z.string().optional().nullable(),
-  cv_url: z.string().optional().nullable(),
-});
 
 export async function POST(req: Request) {
   try {
