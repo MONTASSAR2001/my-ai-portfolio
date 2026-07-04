@@ -1,48 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
 
-export default function Chatbot() {
+export default function Chatbot({ cvData }: { cvData?: any }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hello! I'm the digital version of Montassar. I can answer questions about my engineering experience, ROS projects, or availability. How can I help you today?" }
-  ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    // 1. Add user message to UI immediately
-    const userMessage = { role: "user", text: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput("");
-
-    try {
-      // 2. Send the message to your Next.js backend
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
-      });
-
-      const data = await response.json();
-
-      // 3. Add the real backend response to the UI
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: data.message }
-      ]);
-      
-    } catch (error) {
-      console.error("Failed to send message:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: "Warning: Connection to main engine lost. Please check your network or console." }
-      ]);
-    }
-  };
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { cvData },
+    }),
+    messages: [
+      { id: '1', role: "assistant", parts: [{ type: 'text', text: "Hello! I'm the digital version of Montassar. I can answer questions about my engineering experience, ROS projects, or availability. How can I help you today?" }] }
+    ] as UIMessage[]
+  });
+  
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   return (
     <div className="fixed bottom-6 right-6 z-50 font-sans flex flex-col items-end">
@@ -90,21 +66,30 @@ export default function Chatbot() {
           {/* Messages Area */}
           <div className="flex-1 p-5 overflow-y-auto space-y-5 bg-gradient-to-b from-transparent to-white/30 scrollbar-hide">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={msg.id || i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-sm ${
                   msg.role === "user" 
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none" 
                     : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
                 }`}>
-                  {msg.text}
+                  {msg.parts ? msg.parts.map((p: any) => p.type === 'text' ? p.text : '').join('') : (msg as any).content ?? ''}
                 </div>
               </div>
             ))}
+            {isLoading && messages[messages.length - 1]?.role === 'user' && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl p-4 text-sm shadow-sm bg-white text-gray-800 border border-gray-100 rounded-bl-none flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Form */}
           <div className="p-4 bg-white/80 backdrop-blur-md border-t border-white/50">
-            <form onSubmit={handleSend} className="relative flex items-center">
+            <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) { sendMessage({ text: input }); setInput(''); } }} className="relative flex items-center">
               <input
                 type="text"
                 value={input}
@@ -112,7 +97,7 @@ export default function Chatbot() {
                 placeholder="Ask me anything..."
                 className="w-full bg-gray-100/50 border border-gray-200 rounded-full pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white transition-all"
               />
-              <button type="submit" className="absolute right-1.5 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md disabled:opacity-50">
+              <button type="submit" disabled={isLoading} className="absolute right-1.5 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md disabled:opacity-50">
                 <svg className="w-4 h-4 transform translate-x-px -translate-y-px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
               </button>
             </form>

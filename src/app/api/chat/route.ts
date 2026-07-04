@@ -1,9 +1,15 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
+import { aiRateLimiter } from '@/lib/rate-limit';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+  if (!aiRateLimiter.check(ip)) {
+    return new Response(JSON.stringify({ error: "Too Many Requests" }), { status: 429 });
+  }
+
   try {
     const { messages, cvData } = await req.json();
 

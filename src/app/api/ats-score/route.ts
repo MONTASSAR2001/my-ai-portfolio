@@ -1,6 +1,7 @@
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { NextResponse } from 'next/server';
+import { aiRateLimiter } from '@/lib/rate-limit';
 
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
@@ -8,6 +9,11 @@ const groq = createOpenAI({
 });
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+  if (!aiRateLimiter.check(ip)) {
+    return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
+  }
+
   try {
     const { cvData } = await req.json();
 

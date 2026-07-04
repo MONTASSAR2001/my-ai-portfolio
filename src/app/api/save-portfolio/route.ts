@@ -84,6 +84,33 @@ export async function POST(req: Request) {
       );
     }
 
+    let finalProfileImage = profileImage;
+    if (profileImage && profileImage.startsWith('data:image')) {
+      const match = profileImage.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      if (match) {
+        const ext = match[1];
+        const base64Data = match[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const filename = `${user.id}/${Date.now()}.${ext}`;
+        
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from('portfolios')
+          .upload(filename, buffer, {
+            contentType: `image/${ext}`,
+            upsert: true
+          });
+          
+        if (!uploadError) {
+          const { data: publicUrlData } = supabaseAdmin.storage
+            .from('portfolios')
+            .getPublicUrl(filename);
+          finalProfileImage = publicUrlData.publicUrl;
+        } else {
+          console.error('Failed to upload image:', uploadError);
+        }
+      }
+    }
+
     // ── 3. Build payload ──────────────────────────────────────────────────────
     const { summary = '', skills = [], experience = [], cv_url = null } = portfolio ?? {};
     const backgroundColor = THEME_BG[theme] ?? '#ffffff';
@@ -95,7 +122,7 @@ export async function POST(req: Request) {
         children: [
           {
             id: 'hero-1', type: 'Hero',
-            props: { title: 'Building digital experiences that make an impact.', showBadge: true, badgeText: 'Available for hire', profileImage },
+            props: { title: 'Building digital experiences that make an impact.', showBadge: true, badgeText: 'Available for hire', profileImage: finalProfileImage },
           },
           { id: 'skills-1', type: 'Skills',     props: { layout: 'wrap', color: accent } },
           { id: 'exp-1',    type: 'Experience',  props: { style: 'cards', accent } },
@@ -118,7 +145,7 @@ export async function POST(req: Request) {
           skills,
           experience,
           layout,
-          profile_image: profileImage || null,
+          profile_image: finalProfileImage || null,
           template_id:   templateId,
           cv_url,
           user_id:       user.id,   // ← always the authenticated user, never client-supplied
