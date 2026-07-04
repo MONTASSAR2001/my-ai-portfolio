@@ -149,7 +149,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         variants={sidebarVariants}
         initial="hidden"
         animate="visible"
-        className="fixed left-0 top-0 bottom-0 z-40 flex flex-col"
+        className="print:hidden fixed left-0 top-0 bottom-0 z-40 flex flex-col"
         style={{
           width: 220,
           backgroundColor: "var(--color-void)",
@@ -420,6 +420,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Main content ─────────────────────────────────────────── */}
       <main
+        className="print:ml-0"
         style={{
           flex: 1,
           marginLeft: 220,

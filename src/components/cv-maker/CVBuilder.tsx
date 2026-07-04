@@ -73,7 +73,7 @@ export default function CVBuilder() {
         {/* ── Top Bar ── */}
         <header
           id="cv-topbar"
-          className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 lg:px-8"
+          className="print:hidden sticky top-0 z-30 flex h-16 items-center justify-between px-6 lg:px-8"
           style={{
             background: "color-mix(in oklab, #09090B 60%, transparent)",
             backdropFilter: "blur(20px) saturate(140%)",
@@ -113,7 +113,7 @@ export default function CVBuilder() {
         {/* ── Split layout ── */}
         <div className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           {/* LEFT — Form */}
-          <aside id="cv-form-aside" className="border-r border-white/[0.08] bg-[#09090B] overflow-y-auto">
+          <aside id="cv-form-aside" className="print:hidden border-r border-white/[0.08] bg-[#09090B] overflow-y-auto">
             <div className="mx-auto max-w-xl px-8 py-10">
               <div className="mb-8">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Résumé Studio</p>
@@ -246,17 +246,20 @@ export default function CVBuilder() {
           </aside>
 
           {/* RIGHT — Preview */}
-          <section id="cv-preview-section" className="relative bg-[#111116] overflow-y-auto">
-            {/* dot grid */}
+          <section
+            id="cv-preview-section"
+            className="relative bg-[#111116] overflow-y-auto print:absolute print:inset-0 print:block print:w-full print:bg-white print:z-50 print:p-0 print:m-0 print:overflow-visible"
+          >
+            {/* dot grid — hidden when printing */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-[0.35]"
+              className="print:hidden pointer-events-none absolute inset-0 opacity-[0.35]"
               style={{
                 backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0)",
                 backgroundSize: "22px 22px",
               }}
             />
-            <div className="relative flex min-h-full items-start justify-center px-6 py-12 lg:px-10 lg:py-16">
+            <div className="relative flex min-h-full items-start justify-center px-6 py-12 lg:px-10 lg:py-16 print:block print:p-0 print:m-0 print:min-h-0">
               <PaperPreview cv={cv} skillsForPreview={skillsForPreview} template={template} />
             </div>
           </section>
