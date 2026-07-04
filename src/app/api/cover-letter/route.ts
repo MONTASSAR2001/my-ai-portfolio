@@ -28,7 +28,7 @@ Job Description:
 ${jd}`;
 
     const result = await streamText({
-      model: groq('llama3-70b-8192'),
+      model: groq('llama-3.1-8b-instant'),
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: "Please generate my cover letter." }

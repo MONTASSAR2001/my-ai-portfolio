@@ -29,7 +29,7 @@ CV Data:
 ${JSON.stringify(cvData, null, 2)}`;
 
     const { object } = await generateObject({
-      model: groq('llama3-70b-8192'),
+      model: groq('llama-3.1-8b-instant'),
       schema: atsSchema,
       prompt: systemPrompt,
     });

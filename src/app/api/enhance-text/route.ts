@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const result = await streamText({
-      model: groq('llama3-70b-8192'),
+      model: groq('llama-3.1-8b-instant'),
       system: SYSTEM_PROMPT,
       prompt: `Instruction: ${instruction}\n\nText to enhance:\n${contentToEnhance}`,
     });
