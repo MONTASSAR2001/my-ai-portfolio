@@ -83,7 +83,7 @@ export default function MinimalTemplateClient({ p, isPreview }: { p: PortfolioRo
       </div>
 
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       <header className={`${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100`}>
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -130,7 +130,7 @@ export default function MinimalTemplateClient({ p, isPreview }: { p: PortfolioRo
           {p.profile_image && (
             <motion.div variants={slowFade} initial="hidden" animate="show" className="mt-20">
               <div className="relative w-full max-w-xl h-[400px] overflow-hidden bg-gray-50 rounded-2xl">
-                <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" className="grayscale hover:grayscale-0 transition-all duration-[2s] ease-in-out" />
+                <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" className="grayscale hover:grayscale-0 transition-all duration-[2s] ease-in-out" />
               </div>
             </motion.div>
           )}

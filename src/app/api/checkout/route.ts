@@ -14,18 +14,38 @@
  *    verify the slug belongs to the request context.
  */
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+// ── Helper: build a Supabase client that can read the auth session from cookies ─
+async function getSessionUser() {
+  const cookieStore = await cookies();
+  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  const authToken = cookieStore
+    .getAll()
+    .find(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))?.value;
+
+  const supabase = createClient(supabaseUrl, supabaseAnon, {
+    global: { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  return user;
+}
 
 /** One-time product price in cents (USD). Update this or use a real Price ID. */
 const PRICE_AMOUNT_CENTS = 1900; // $19.00
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { slug: string; user_id?: string };
-    const { slug, user_id } = body;
+    const body = (await request.json()) as { slug: string };
+    const { slug } = body;
 
     if (!slug || slug.trim().length < 3) {
       return NextResponse.json(
@@ -34,10 +54,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in.' },
+        { status: 401 }
+      );
+    }
+
     // ── 1. Fetch the portfolio row (confirms it exists) ──────────────────────
     const { data: portfolio, error: fetchErr } = await supabaseAdmin
       .from('portfolios')
-      .select('id, slug, stripe_customer_id, has_paid')
+      .select('id, slug, stripe_customer_id, has_paid, user_id')
       .eq('slug', slug.trim())
       .single();
 
@@ -45,6 +73,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Portfolio not found. Save your portfolio first.' },
         { status: 404 }
+      );
+    }
+
+    if (portfolio.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden. You do not own this portfolio.' },
+        { status: 403 }
       );
     }
 
@@ -63,7 +98,7 @@ export async function POST(request: Request) {
       const customer = await stripe.customers.create({
         metadata: {
           portfolio_slug: slug,
-          ...(user_id ? { user_id } : {}),
+          user_id: user.id,
         },
       });
       customerId = customer.id;
@@ -76,6 +111,7 @@ export async function POST(request: Request) {
     }
 
     // ── 4. Create the Checkout Session ─────────────────────────────────────
+    const APP_URL = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -97,7 +133,7 @@ export async function POST(request: Request) {
       metadata: {
         portfolio_id: String(portfolio.id),
         portfolio_slug: slug,
-        ...(user_id ? { user_id } : {}),
+        user_id: user.id,
       },
       success_url: `${APP_URL}/dashboard/portfolio?published=1&slug=${encodeURIComponent(slug)}`,
       cancel_url:  `${APP_URL}/dashboard/portfolio?cancelled=1`,

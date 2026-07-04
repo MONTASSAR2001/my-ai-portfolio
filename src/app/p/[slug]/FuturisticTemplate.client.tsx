@@ -171,7 +171,7 @@ export default function FuturisticTemplateClient({ p, isPreview }: { p: Portfoli
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
       {!isPreview && (
         <div className="dark">
-          <CommandPalette cvUrl={p.cv_url} />
+          <CommandPalette cvUrl={p.cv_url ?? undefined} />
         </div>
       )}
 
@@ -254,7 +254,7 @@ export default function FuturisticTemplateClient({ p, isPreview }: { p: Portfoli
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050505] px-2 font-mono text-xs text-[#00f3ff] z-10 border border-[#00f3ff]/50">
                     ID_TAG
                   </div>
-                  <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" className="p-2 opacity-80 mix-blend-screen filter contrast-125 hover:opacity-100 transition-all duration-300" />
+                  <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" className="p-2 opacity-80 mix-blend-screen filter contrast-125 hover:opacity-100 transition-all duration-300" />
                 </motion.div>
               </div>
             )}

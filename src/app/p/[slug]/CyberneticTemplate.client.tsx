@@ -331,7 +331,7 @@ export default function CyberneticTemplateClient({ p, isPreview }: { p: Portfoli
       <div className="pointer-events-none fixed -top-40 left-1/2 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[oklch(0.6_0.2_210/0.15)] blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-[400px] w-[600px] rounded-full bg-[oklch(0.55_0.22_280/0.12)] blur-[120px]" />
 
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       {/* Nav */}
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6">

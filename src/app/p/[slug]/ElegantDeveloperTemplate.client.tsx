@@ -122,7 +122,7 @@ export default function ElegantDeveloperTemplateClient({ p, isPreview }: { p: Po
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
       {!isPreview && (
         <div className="dark">
-          <CommandPalette cvUrl={p.cv_url} />
+          <CommandPalette cvUrl={p.cv_url ?? undefined} />
         </div>
       )}
 

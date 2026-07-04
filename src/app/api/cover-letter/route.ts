@@ -35,7 +35,7 @@ ${jd}`;
       ],
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('Cover Letter Generation Error:', error);
     return new Response('Internal Server Error', { status: 500 });

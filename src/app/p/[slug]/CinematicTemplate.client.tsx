@@ -85,7 +85,7 @@ export default function CinematicTemplateClient({ p, isPreview }: { p: Portfolio
       </div>
 
       {/* 2. Command Palette (Hidden in preview so it doesn't hijack CMD+K) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       {/* Navigation Header */}
       <motion.header 
@@ -105,7 +105,7 @@ export default function CinematicTemplateClient({ p, isPreview }: { p: Portfolio
         <section id="hero" className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
           <motion.div style={{ y: yHero, opacity: opacityHero }} className="absolute inset-0 z-0 pointer-events-none">
             {p.profile_image ? (
-              <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" className="slow-pan opacity-30 brightness-75 grayscale" />
+              <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" className="slow-pan opacity-30 brightness-75 grayscale" />
             ) : (
               <div className="w-full h-full bg-gradient-to-b from-[#111] to-[#000]" />
             )}

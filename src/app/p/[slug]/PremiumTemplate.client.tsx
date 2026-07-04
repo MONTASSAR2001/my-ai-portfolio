@@ -103,7 +103,7 @@ export default function PremiumTemplateClient({ p, isPreview }: { p: PortfolioRo
       <FluidMeshBackground />
       
       {/* 2. Command Palette (Hidden in preview iframe so it doesn't hijack keystrokes) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       <motion.header 
         initial={{ opacity: 0, y: -20 }}
@@ -149,7 +149,7 @@ export default function PremiumTemplateClient({ p, isPreview }: { p: PortfolioRo
               >
                 <div className="w-48 h-48 md:w-64 md:h-64 overflow-hidden rounded-full bg-white/50 shadow-2xl backdrop-blur-md">
                   <Image 
-                    src={p.profile_image} 
+                    src={p.profile_image ?? undefined} 
                     alt={name} 
                     width={256} 
                     height={256} 

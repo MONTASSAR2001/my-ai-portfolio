@@ -1,11 +1,8 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
-  }
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  // TypeScript errors now correctly block production builds.
+  // Run `npx tsc --noEmit` locally to surface any type issues before deploying.
 };
 
 export default nextConfig;

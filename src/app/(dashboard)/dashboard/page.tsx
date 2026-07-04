@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import AntiGravityWrapper from "@/components/AntiGravityWrapper";
 
 /* ─── Animation Variants ────────────────────────────────────────── */
 
 // Header: text slices down from above
-const headerVariants = {
+const headerVariants: Variants = {
   hidden: { opacity: 0, y: -32, skewY: -2 },
   visible: {
     opacity: 1,
@@ -17,7 +17,7 @@ const headerVariants = {
   },
 };
 
-const subtextVariants = {
+const subtextVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
@@ -27,7 +27,7 @@ const subtextVariants = {
 };
 
 // Card 1: slices in from top-left diagonally
-const card1Variants = {
+const card1Variants: Variants = {
   hidden: { opacity: 0, x: -60, y: 40, skewX: -4, skewY: 2 },
   visible: {
     opacity: 1,
@@ -40,7 +40,7 @@ const card1Variants = {
 };
 
 // Card 2: slices in from bottom-right diagonally
-const card2Variants = {
+const card2Variants: Variants = {
   hidden: { opacity: 0, x: 60, y: -40, skewX: 4, skewY: -2 },
   visible: {
     opacity: 1,
@@ -53,7 +53,7 @@ const card2Variants = {
 };
 
 // Strip
-const stripVariants = {
+const stripVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

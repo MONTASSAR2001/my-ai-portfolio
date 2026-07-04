@@ -125,7 +125,7 @@ export default function CorporateAITemplateClient({ p, isPreview }: { p: Portfol
       </div>
 
       {/* 2. Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       <header className={`corporate-header ${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 z-50 shadow-md`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -200,7 +200,7 @@ export default function CorporateAITemplateClient({ p, isPreview }: { p: Portfol
             {p.profile_image && (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, ease: "easeOut" }} className="flex-1 flex justify-center lg:justify-end">
                 <div className="relative w-80 h-80 lg:w-96 lg:h-96 rounded-xl overflow-hidden border-8 border-slate-800 shadow-2xl bg-slate-900">
-                  <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" />
+                  <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" />
                 </div>
               </motion.div>
             )}

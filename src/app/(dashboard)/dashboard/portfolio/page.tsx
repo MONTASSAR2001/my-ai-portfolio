@@ -253,6 +253,7 @@ export default function PortfolioBuilderPage() {
   };
 
   const handlePublish = async () => {
+    if (isPublishing) return;
     if (!slug){setSlugErr("Required");return;} if(slugErr)return;
     setIsPublishing(true); setPublishMsg(""); setPublishStatus("idle");
     try {

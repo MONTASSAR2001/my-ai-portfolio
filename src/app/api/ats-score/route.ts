@@ -28,9 +28,22 @@ ${JSON.stringify(cvData, null, 2)}`;
     const cleanedText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanedText);
 
+    if (typeof parsedData.score !== 'number' || !Array.isArray(parsedData.feedback)) {
+      throw new Error('Malformed AI response structure');
+    }
+
     return NextResponse.json(parsedData);
   } catch (error) {
     console.error('ATS Score Generation Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        score: 0,
+        feedback: [
+          "The AI system is currently overloaded or returned malformed data.",
+          "Please click 'Scan CV' again in a few moments."
+        ]
+      },
+      { status: 503 }
+    );
   }
 }

@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
 
 // ── Shared glass panel base ───────────────────────────────────────────────────
 export const GlassPanel = ({
@@ -518,13 +519,17 @@ export const InterviewDefender = ({ themeColor, cvData }: { themeColor: string |
   const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat',
-    body: { cvData },
-    initialMessages: [
-      { id: '1', role: 'assistant', content: `Hello! I am ${cvData?.name || "the creator"}'s AI Assistant. Ask me anything about their experience, skills, or projects.` }
-    ]
+  const [inputText, setInputText] = React.useState('');
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { cvData },
+    }),
+    messages: [
+      { id: '1', role: 'assistant', parts: [{ type: 'text', text: `Hello! I am ${cvData?.name || "the creator"}'s AI Assistant. Ask me anything about their experience, skills, or projects.` }] }
+    ] as UIMessage[]
   });
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   React.useEffect(() => {
     if (messagesEndRef.current) {
@@ -597,7 +602,9 @@ export const InterviewDefender = ({ themeColor, cvData }: { themeColor: string |
                     color: m.role === 'user' ? "#fff" : "#c0c0e0",
                     fontSize: 12, lineHeight: 1.5
                   }}>
-                    {m.content}
+                    {m.parts
+                      ? m.parts.map((p: any) => p.type === 'text' ? p.text : '').join('')
+                      : (m as any).content ?? ''}
                   </div>
                 </motion.div>
               ))}
@@ -613,11 +620,10 @@ export const InterviewDefender = ({ themeColor, cvData }: { themeColor: string |
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div className="p-3 border-t" style={{ borderColor: "rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.4)" }}>
-              <form onSubmit={handleSubmit} className="relative">
+              <form onSubmit={(e) => { e.preventDefault(); if (inputText.trim()) { sendMessage({ text: inputText }); setInputText(''); }}} className="relative">
                 <input 
-                  value={input} onChange={handleInputChange}
+                  value={inputText} onChange={(e) => setInputText(e.target.value)}
                   placeholder="Ask me anything..." 
                   className="w-full bg-transparent text-white text-xs px-3 py-2 outline-none rounded-lg"
                   style={{ border: `1px solid ${themeColor || '#22d3ee'}40` }}

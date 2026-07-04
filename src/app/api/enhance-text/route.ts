@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       prompt: `Instruction: ${instruction}\n\nText to enhance:\n${contentToEnhance}`,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Error in enhance-text API:", error);
     return new Response('Failed to enhance text', { status: 500 });

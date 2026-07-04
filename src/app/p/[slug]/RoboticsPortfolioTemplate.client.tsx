@@ -106,7 +106,7 @@ export default function RoboticsPortfolioTemplateClient({ p, isPreview }: { p: P
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
       {!isPreview && (
         <div className="dark">
-          <CommandPalette cvUrl={p.cv_url} />
+          <CommandPalette cvUrl={p.cv_url ?? undefined} />
         </div>
       )}
 
@@ -201,7 +201,7 @@ export default function RoboticsPortfolioTemplateClient({ p, isPreview }: { p: P
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#050b14] px-2 robo-font-mono text-xs text-cyan-500 z-10">
                     OPTICAL_SENSOR
                   </div>
-                  <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" className="p-2 opacity-80 mix-blend-luminosity hover:mix-blend-normal hover:opacity-100 transition-all duration-500" />
+                  <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" className="p-2 opacity-80 mix-blend-luminosity hover:mix-blend-normal hover:opacity-100 transition-all duration-500" />
                 </motion.div>
               </div>
             )}

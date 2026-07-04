@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { supabaseBrowser as supabase } from "@/lib/supabase";
 
 /* ─── Navigation config ─────────────────────────────────────────── */
@@ -48,7 +48,7 @@ const NAV_ITEMS = [
 ];
 
 /* ─── Sidebar animation variants ───────────────────────────────── */
-const sidebarVariants = {
+const sidebarVariants: Variants = {
   hidden: { x: -80, opacity: 0 },
   visible: {
     x: 0,
@@ -57,7 +57,7 @@ const sidebarVariants = {
   },
 };
 
-const navItemVariants = {
+const navItemVariants: Variants = {
   hidden: { x: -24, opacity: 0 },
   visible: (i: number) => ({
     x: 0,

@@ -106,7 +106,7 @@ export default function ChicTechTemplateClient({ p, isPreview }: { p: PortfolioR
       <FluidMeshBackground />
       
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview iframe) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       <motion.header 
         initial={{ y: -100, opacity: 0 }}
@@ -187,7 +187,7 @@ export default function ChicTechTemplateClient({ p, isPreview }: { p: PortfolioR
                   variants={floatingAnimation} animate="animate"
                   className="w-48 h-48 rounded-full overflow-hidden border-[8px] border-white/60 shadow-2xl backdrop-blur-md bg-white/30"
                 >
-                  <Image src={p.profile_image} alt={name} width={192} height={192} className="object-cover w-full h-full" />
+                  <Image src={p.profile_image ?? undefined} alt={name} width={192} height={192} className="object-cover w-full h-full" />
                 </motion.div>
               </motion.div>
             )}

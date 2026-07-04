@@ -11,7 +11,7 @@ import AIEnhanceButton from "@/components/cv-maker/AIEnhanceButton";
 import CoverLetterGenerator from "@/components/cv-maker/CoverLetterGenerator";
 import ATSAnalyzer from "@/components/cv-maker/ATSAnalyzer";
 import { TEMPLATE_REGISTRY, type TemplateId } from "@/components/cv-maker/templates";
-import { User, FileText, Briefcase, GraduationCap, Sparkles, Download, Plus, Trash2, LayoutTemplate, PenLine, Target } from "lucide-react";
+import { User, FileText, Briefcase, GraduationCap, Sparkles, Download, Plus, Trash2, LayoutTemplate, PenLine, Target, Mail, Phone, MapPin, Globe } from "lucide-react";
 
 // ─── Internal form state (superset of CVData for the builder) ───────────────
 // We keep `website` and re-map skills as a plain string for ergonomics.

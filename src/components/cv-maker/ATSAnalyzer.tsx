@@ -32,6 +32,11 @@ export default function ATSAnalyzer({ cvData }: ATSAnalyzerProps) {
       });
       
       if (!res.ok) {
+        if (res.status === 503) {
+          const fallbackData: ATSResult = await res.json();
+          setResult(fallbackData);
+          return;
+        }
         throw new Error('Failed to analyze CV');
       }
       

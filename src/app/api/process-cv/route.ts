@@ -22,6 +22,14 @@ export async function POST(req: Request) {
     const file = formData.get('cv') as File | null;
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
 
+    if (file.type !== 'application/pdf') {
+      return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 });
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File size must not exceed 5MB' }, { status: 413 });
+    }
+
     // 2. Extract PDF text
     const buffer = Buffer.from(await file.arrayBuffer());
     const extractedText = await new Promise<string>((resolve, reject) => {

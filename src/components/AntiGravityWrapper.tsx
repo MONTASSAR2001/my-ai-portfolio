@@ -24,8 +24,9 @@ import React, {
 import {
   motion,
   useAnimationControls,
-  type AnimationControls,
 } from "framer-motion";
+
+type AnimationControls = ReturnType<typeof useAnimationControls>;
 
 /* ─── tuneable constants ──────────────────────────────────────────── */
 const DRIFT_DURATION_MIN = 3.5;   // seconds per target

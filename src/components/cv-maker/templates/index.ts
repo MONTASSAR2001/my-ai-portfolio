@@ -10,6 +10,7 @@ export { ModernTemplate } from "./ModernTemplate";
 export { ClassicTemplate } from "./ClassicTemplate";
 export type { TemplateProps } from "./_shared";
 
+import type React from 'react';
 import type { TemplateProps } from "./_shared";
 import { MinimalTemplate } from "./MinimalTemplate";
 import { CorporateTemplate } from "./CorporateTemplate";
@@ -29,7 +30,7 @@ export type TemplateId =
 
 export const TEMPLATE_REGISTRY: Record<TemplateId, {
   label: string;
-  component: (props: TemplateProps) => JSX.Element;
+  component: (props: TemplateProps) => React.ReactElement;
 }> = {
   minimal:   { label: "Minimal",   component: MinimalTemplate },
   corporate: { label: "Corporate", component: CorporateTemplate },

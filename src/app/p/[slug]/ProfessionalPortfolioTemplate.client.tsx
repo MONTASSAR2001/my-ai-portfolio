@@ -94,7 +94,7 @@ export default function ProfessionalPortfolioTemplateClient({ p, isPreview }: { 
       </div>
 
       {/* ADVANCED COMPONENT 2: Command Palette (Hidden in preview) */}
-      {!isPreview && <CommandPalette cvUrl={p.cv_url} />}
+      {!isPreview && <CommandPalette cvUrl={p.cv_url ?? undefined} />}
 
       <header className={`${isPreview ? 'absolute' : 'fixed'} top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm`}>
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -166,7 +166,7 @@ export default function ProfessionalPortfolioTemplateClient({ p, isPreview }: { 
             {p.profile_image && (
               <motion.div initial="hidden" animate="show" variants={slideLeft} className="w-full max-w-md shrink-0">
                 <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-                  <Image src={p.profile_image} alt={name} layout="fill" objectFit="cover" className="hover:scale-105 transition-transform duration-700" />
+                  <Image src={p.profile_image ?? undefined} alt={name} layout="fill" objectFit="cover" className="hover:scale-105 transition-transform duration-700" />
                 </div>
               </motion.div>
             )}

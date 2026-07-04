@@ -21,7 +21,7 @@ ${JSON.stringify(cvData, null, 2)}`;
       system: systemPrompt,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
     return new Response(JSON.stringify({ error: "Failed to generate response" }), { status: 500 });
