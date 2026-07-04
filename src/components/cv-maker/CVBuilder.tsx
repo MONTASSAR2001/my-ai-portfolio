@@ -8,12 +8,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AIEnhanceButton from "@/components/cv-maker/AIEnhanceButton";
-import {
-  User, FileText, Briefcase, GraduationCap, Sparkles,
-  Download, Plus, Trash2, Mail, Phone, MapPin, Globe,
-} from "lucide-react";
-
-type Template = "minimal" | "corporate" | "creative";
+import { TEMPLATE_REGISTRY, type TemplateId } from "@/components/cv-maker/templates";
+import { User, FileText, Briefcase, GraduationCap, Sparkles, Download, Plus, Trash2 } from "lucide-react";
 
 // ─── Internal form state (superset of CVData for the builder) ───────────────
 // We keep `website` and re-map skills as a plain string for ergonomics.
@@ -52,7 +48,7 @@ const defaultValues: BuilderForm = {
 };
 
 export default function CVBuilder() {
-  const [template, setTemplate] = useState<Template>("minimal");
+  const [template, setTemplate] = useState<TemplateId>("minimal");
 
   const { register, control, watch, setValue } = useForm<BuilderForm>({
     resolver: zodResolver(cvSchema.extend({ skillsRaw: cvSchema.shape.summary }) as any),
@@ -76,6 +72,7 @@ export default function CVBuilder() {
       <div className="min-h-screen bg-[#09090B] text-zinc-200">
         {/* ── Top Bar ── */}
         <header
+          id="cv-topbar"
           className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 lg:px-8"
           style={{
             background: "color-mix(in oklab, #09090B 60%, transparent)",
@@ -92,14 +89,14 @@ export default function CVBuilder() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select value={template} onValueChange={(v) => setTemplate(v as Template)}>
-              <SelectTrigger className="h-9 w-[170px] text-xs">
+            <Select value={template} onValueChange={(v) => setTemplate(v as TemplateId)}>
+              <SelectTrigger className="h-9 w-[200px] text-xs">
                 <SelectValue placeholder="Template" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="corporate">Corporate</SelectItem>
-                <SelectItem value="creative">Creative</SelectItem>
+                {(Object.entries(TEMPLATE_REGISTRY) as [TemplateId, { label: string }][]).map(([id, { label }]) => (
+                  <SelectItem key={id} value={id}>{label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -116,7 +113,7 @@ export default function CVBuilder() {
         {/* ── Split layout ── */}
         <div className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           {/* LEFT — Form */}
-          <aside className="border-r border-white/[0.08] bg-[#09090B] overflow-y-auto">
+          <aside id="cv-form-aside" className="border-r border-white/[0.08] bg-[#09090B] overflow-y-auto">
             <div className="mx-auto max-w-xl px-8 py-10">
               <div className="mb-8">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Résumé Studio</p>
@@ -249,7 +246,7 @@ export default function CVBuilder() {
           </aside>
 
           {/* RIGHT — Preview */}
-          <section className="relative bg-[#111116] overflow-y-auto">
+          <section id="cv-preview-section" className="relative bg-[#111116] overflow-y-auto">
             {/* dot grid */}
             <div
               aria-hidden
@@ -350,9 +347,11 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 
 type PreviewCV = BuilderForm;
 
-function PaperPreview({ cv, skillsForPreview, template }: { cv: PreviewCV; skillsForPreview: string[]; template: Template }) {
+function PaperPreview({ cv, skillsForPreview, template }: { cv: PreviewCV; skillsForPreview: string[]; template: TemplateId }) {
+  const TemplateComponent = TEMPLATE_REGISTRY[template].component;
   return (
     <div
+      id="cv-preview-paper"
       className="w-full max-w-[720px] rounded-sm bg-white text-neutral-900"
       style={{
         aspectRatio: "1 / 1.414",
@@ -360,13 +359,14 @@ function PaperPreview({ cv, skillsForPreview, template }: { cv: PreviewCV; skill
       }}
     >
       <div className="h-full w-full overflow-hidden p-10 sm:p-14">
-        {template === "minimal" && <MinimalTemplate cv={cv} skills={skillsForPreview} />}
-        {template === "corporate" && <CorporateTemplate cv={cv} skills={skillsForPreview} />}
-        {template === "creative" && <CreativeTemplate cv={cv} skills={skillsForPreview} />}
+        <TemplateComponent cv={cv} skills={skillsForPreview} />
       </div>
     </div>
   );
 }
+
+// All template components are now in src/components/cv-maker/templates/
+// The inline MinimalTemplate, CorporateTemplate, CreativeTemplate have been removed.
 
 function ContactRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (

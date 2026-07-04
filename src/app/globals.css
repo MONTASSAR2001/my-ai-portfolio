@@ -127,3 +127,63 @@ body::before {
     0 8px 24px -6px rgba(0,0,0,0.55),
     0 40px 80px -20px rgba(0,0,0,0.65);
 }
+
+/* ─── CV Maker — Print / PDF Export ────────────────────────────────
+   When window.print() is called only the white A4 paper shows.
+   Everything else (topbar, form sidebar, dot-grid background) is hidden.
+───────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide the entire app chrome */
+  #cv-topbar,
+  #cv-form-aside {
+    display: none !important;
+  }
+
+  /* Make the preview section fill the whole viewport */
+  #cv-preview-section {
+    position: fixed !important;
+    inset: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  /* Remove dot-grid overlay */
+  #cv-preview-section > [aria-hidden] {
+    display: none !important;
+  }
+
+  /* The inner centering wrapper */
+  #cv-preview-section > div {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: unset !important;
+  }
+
+  /* The A4 paper card — scale to fill the page exactly */
+  #cv-preview-paper {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    aspect-ratio: 1 / 1.414 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure colours print correctly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Single page, A4, no margins */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+}
