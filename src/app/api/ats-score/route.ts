@@ -1,15 +1,10 @@
-import { generateObject } from 'ai';
+import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { z } from 'zod';
+import { NextResponse } from 'next/server';
 
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
   apiKey: process.env.GROQ_API_KEY,
-});
-
-const atsSchema = z.object({
-  score: z.number().describe("Score from 0 to 100 representing the ATS match and CV strength"),
-  feedback: z.array(z.string()).describe("3 to 5 actionable tips to improve the CV formatting, impact, or professional wording")
 });
 
 export async function POST(req: Request) {
@@ -17,26 +12,25 @@ export async function POST(req: Request) {
     const { cvData } = await req.json();
 
     if (!cvData) {
-      return new Response('Missing cvData', { status: 400 });
+      return NextResponse.json({ error: 'Missing cvData' }, { status: 400 });
     }
 
-    const systemPrompt = `Act as an strict ATS (Applicant Tracking System) and senior recruiter. 
-Analyze the provided CV data. Calculate a realistic score out of 100 based on completeness, impact, quantifiable achievements, and professional wording. 
-Provide 3-5 short, actionable feedback points to improve it.
-Be strict but constructive. Return the structured data only.
+    const systemPrompt = `You are an expert ATS System. Analyze the CV data. You MUST return your response STRICTLY as a raw JSON object with the exact structure: {"score": number, "feedback": ["string", "string", "string"]}. Do not include any markdown formatting, do not use \`\`\`json blocks, just return the raw JSON string starting with { and ending with }.
 
 CV Data:
 ${JSON.stringify(cvData, null, 2)}`;
 
-    const { object } = await generateObject({
+    const { text } = await generateText({
       model: groq('llama-3.1-8b-instant'),
-      schema: atsSchema,
       prompt: systemPrompt,
     });
 
-    return Response.json(object);
+    const cleanedText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanedText);
+
+    return NextResponse.json(parsedData);
   } catch (error) {
     console.error('ATS Score Generation Error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
