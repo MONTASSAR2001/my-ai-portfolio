@@ -95,3 +95,35 @@ body::before {
   background: var(--color-gold-glow-strong);
   color: var(--color-amber);
 }
+
+/* ─── CV Maker — Radix Accordion animations ─────────────────────── */
+@keyframes accordion-down {
+  from { height: 0; opacity: 0; }
+  to   { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to   { height: 0; opacity: 0; }
+}
+.data-\[state\=open\]\:animate-accordion-down[data-state=open] {
+  animation: accordion-down 0.22s ease-out;
+}
+.data-\[state\=closed\]\:animate-accordion-up[data-state=closed] {
+  animation: accordion-up 0.22s ease-out;
+}
+
+/* ─── CV Maker — Focus glow utility ────────────────────────────── */
+.focus-glow:focus,
+.focus-glow:focus-within {
+  outline: none;
+  border-color: rgba(201, 168, 76, 0.55);
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.35), 0 0 24px -4px rgba(201, 168, 76, 0.25);
+}
+
+/* ─── CV Maker — Paper shadow ───────────────────────────────────── */
+.paper-shadow {
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.35),
+    0 8px 24px -6px rgba(0,0,0,0.55),
+    0 40px 80px -20px rgba(0,0,0,0.65);
+}
