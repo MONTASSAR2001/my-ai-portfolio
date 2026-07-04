@@ -354,7 +354,7 @@ function PaperPreview({ cv, skillsForPreview, template }: { cv: PreviewCV; skill
   const TemplateComponent = TEMPLATE_REGISTRY[template].component;
   return (
     <div
-      id="cv-preview-paper"
+      id="cv-print-area"
       className="w-full max-w-[720px] rounded-sm bg-white text-neutral-900"
       style={{
         aspectRatio: "1 / 1.414",

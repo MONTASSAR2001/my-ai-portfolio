@@ -133,21 +133,39 @@ body::before {
    This block handles global browser print resets.
 ───────────────────────────────────────────────────────────────────── */
 @media print {
-  @page { margin: 0; size: A4; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
-
-  /* Belt-and-suspenders: reinforce what Tailwind print:hidden already sets */
-  #cv-topbar,
-  #cv-form-aside {
-    display: none !important;
+  @page {
+    size: A4;
+    margin: 0;
   }
 
-  /* The A4 paper card — exact dimensions, no shadow or rounding */
-  #cv-preview-paper {
-    width: 210mm !important;
-    max-width: 210mm !important;
+  body {
+    background-color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide absolutely everything in the body by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Only make the CV area and its children visible */
+  #cv-print-area,
+  #cv-print-area * {
+    visibility: visible;
+  }
+
+  /* Position the CV area at the absolute top left of the page
+     to break out of all parent grids, flexboxes, and margins */
+  #cv-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
     box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
+    transform: none !important;
   }
 }
