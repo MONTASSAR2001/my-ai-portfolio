@@ -1,6 +1,11 @@
-import { google } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { cvSchema } from '@/lib/schemas/cv-schema';
+
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export const maxDuration = 60;
 
@@ -15,7 +20,7 @@ Your task is to translate the provided CV/Portfolio data into ${targetLang}.
 - Return the exact same JSON structure, with all text fields properly translated to ${targetLang}.`;
 
     const { object } = await generateObject({
-      model: google('gemini-1.5-pro-latest'),
+      model: groq('llama3-70b-8192'),
       system: systemPrompt,
       prompt: JSON.stringify(cvData),
       schema: cvSchema,

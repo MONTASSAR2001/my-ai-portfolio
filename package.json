@@ -19,7 +19,7 @@
     "@radix-ui/react-tooltip": "^1.2.11",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/supabase-js": "^2.108.2",
-    "ai": "^6.0.218",
+    "ai": "^6.0.219",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "colorthief": "^3.4.0",

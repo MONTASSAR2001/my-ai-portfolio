@@ -8,8 +8,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AIEnhanceButton from "@/components/cv-maker/AIEnhanceButton";
+import CoverLetterGenerator from "@/components/cv-maker/CoverLetterGenerator";
+import ATSAnalyzer from "@/components/cv-maker/ATSAnalyzer";
 import { TEMPLATE_REGISTRY, type TemplateId } from "@/components/cv-maker/templates";
-import { User, FileText, Briefcase, GraduationCap, Sparkles, Download, Plus, Trash2 } from "lucide-react";
+import { User, FileText, Briefcase, GraduationCap, Sparkles, Download, Plus, Trash2, LayoutTemplate, PenLine, Target } from "lucide-react";
 
 // ─── Internal form state (superset of CVData for the builder) ───────────────
 // We keep `website` and re-map skills as a plain string for ergonomics.
@@ -49,6 +51,7 @@ const defaultValues: BuilderForm = {
 
 export default function CVBuilder() {
   const [template, setTemplate] = useState<TemplateId>("minimal");
+  const [activeTab, setActiveTab] = useState<"cv" | "cover-letter" | "ats">("cv");
 
   const { register, control, watch, setValue } = useForm<BuilderForm>({
     resolver: zodResolver(cvSchema.extend({ skillsRaw: cvSchema.shape.summary }) as any),
@@ -115,15 +118,50 @@ export default function CVBuilder() {
           {/* LEFT — Form */}
           <aside id="cv-form-aside" className="print:hidden border-r border-white/[0.08] bg-[#09090B] overflow-y-auto">
             <div className="mx-auto max-w-xl px-8 py-10">
-              <div className="mb-8">
+              <div className="mb-6">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Résumé Studio</p>
                 <h1 className="mt-2 font-serif text-3xl leading-tight text-zinc-100">
                   Craft a résumé worth reading.
                 </h1>
               </div>
 
-              <Accordion type="multiple" defaultValue={["personal", "summary", "experience"]} className="space-y-2">
-                {/* Personal */}
+              {/* View Toggle */}
+              <div className="flex bg-white/[0.02] border border-white/[0.08] rounded-lg p-1 mb-8">
+                <button
+                  onClick={() => setActiveTab("cv")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium rounded-md transition-all ${
+                    activeTab === "cv" 
+                      ? "bg-[#111116] text-white shadow-sm border border-white/[0.08]" 
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  <LayoutTemplate className="w-3.5 h-3.5" /> Editor
+                </button>
+                <button
+                  onClick={() => setActiveTab("cover-letter")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium rounded-md transition-all ${
+                    activeTab === "cover-letter" 
+                      ? "bg-[#111116] text-white shadow-sm border border-white/[0.08]" 
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  <PenLine className="w-3.5 h-3.5" /> Letter
+                </button>
+                <button
+                  onClick={() => setActiveTab("ats")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium rounded-md transition-all ${
+                    activeTab === "ats" 
+                      ? "bg-[#111116] text-white shadow-sm border border-white/[0.08]" 
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  <Target className="w-3.5 h-3.5" /> ATS Scan
+                </button>
+              </div>
+
+              {activeTab === "cv" ? (
+                <Accordion type="multiple" defaultValue={["personal", "summary", "experience"]} className="space-y-2">
+                  {/* Personal */}
                 <FormSection value="personal" icon={<User className="h-3.5 w-3.5" />} label="Personal Details">
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Full name" {...register("name")} />
@@ -242,6 +280,15 @@ export default function CVBuilder() {
                   />
                 </FormSection>
               </Accordion>
+              ) : activeTab === "cover-letter" ? (
+                <div className="mt-2">
+                  <CoverLetterGenerator cvData={cv} />
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <ATSAnalyzer cvData={cv} />
+                </div>
+              )}
             </div>
           </aside>
 

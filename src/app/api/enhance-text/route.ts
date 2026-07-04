@@ -1,5 +1,10 @@
 import { streamText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export const maxDuration = 60;
 
@@ -19,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const result = await streamText({
-      model: google('gemini-1.5-pro-latest'),
+      model: groq('llama3-70b-8192'),
       system: SYSTEM_PROMPT,
       prompt: `Instruction: ${instruction}\n\nText to enhance:\n${contentToEnhance}`,
     });

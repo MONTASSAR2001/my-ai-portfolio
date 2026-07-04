@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import PDFParser from 'pdf2json';
-import { google } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { cvSchema } from '@/lib/schemas/cv-schema';
+
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export const maxDuration = 60;
 
@@ -31,10 +36,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'PDF appears to be empty or image-only.' }, { status: 400 });
     }
 
-    // 3. Process with Google Gemini using AI SDK
-    console.log('🔄 Calling Google (gemini-1.5-pro-latest)…');
+    // 3. Process with Groq using AI SDK
+    console.log('🔄 Calling Groq (llama3-70b-8192)…');
     const { object } = await generateObject({
-      model: google('gemini-1.5-pro-latest'),
+      model: groq('llama3-70b-8192'),
       system: SYSTEM_PROMPT,
       prompt: extractedText,
       schema: cvSchema,
