@@ -24,7 +24,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
  *  Safe to use in "use client" components and auth flows.
  *  Shares a single GoTrueClient instance to avoid the duplicate-instance warning.
  */
-export const supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Force the PKCE authorization code flow so Supabase always redirects to
+    // /auth/callback?code=... instead of the implicit flow (/#access_token=...).
+    // This is the canonical approach recommended by the @supabase/ssr package.
+    flowType: "pkce",
+    // Ensure the client automatically picks up the session from the URL on load.
+    detectSessionInUrl: true,
+  },
+});
 
 /** ── Server client (service role) ───────────────────────────────────────────
  *  Use ONLY in Route Handlers (server-side). Bypasses RLS so upserts/inserts
