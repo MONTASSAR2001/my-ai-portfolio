@@ -1,4 +1,5 @@
 import CVBuilder from "@/components/cv-maker/CVBuilder";
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "CV Maker — Résumé Studio",
