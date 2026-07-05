@@ -140,10 +140,19 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
+    // Use NEXT_PUBLIC_SITE_URL env var (set in Vercel to the production domain)
+    // so that even if the Supabase dashboard Site URL is wrong, the PKCE code
+    // always lands on /auth/callback. Falls back to window.location.origin in dev.
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + "/auth/callback",
+        redirectTo: siteUrl + "/auth/callback",
+        queryParams: {
+          // Force offline access so we get a refresh_token on every sign-in.
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) {
