@@ -27,7 +27,7 @@ CV Data:
 ${JSON.stringify(cvData, null, 2)}`;
 
     const { text } = await generateText({
-      model: groq('llama-3.1-8b-instant'),
+      model: groq('llama-3.3-70b-versatile'),
       prompt: systemPrompt,
     });
 

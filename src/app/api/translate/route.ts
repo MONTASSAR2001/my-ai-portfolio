@@ -20,7 +20,7 @@ Your task is to translate the provided CV/Portfolio data into ${targetLang}.
 - Return the exact same JSON structure, with all text fields properly translated to ${targetLang}.`;
 
     const { object } = await generateObject({
-      model: groq('llama-3.1-8b-instant'),
+      model: groq('llama-3.3-70b-versatile'),
       system: systemPrompt,
       prompt: JSON.stringify(cvData),
       schema: cvSchema,
